@@ -1,10 +1,15 @@
 import { Redirect } from 'expo-router';
+import { useAuthStore } from '@/store/use-auth-store';
+import { LoadingState } from '@/components/ui/loading-state';
 
 export default function Index() {
-  // Logic for auth state goes here later
-  const isAuthenticated = false;
+  const { user, isLoading } = useAuthStore();
 
-  if (isAuthenticated) {
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (user) {
     return <Redirect href="/(tabs)/today" />;
   }
 

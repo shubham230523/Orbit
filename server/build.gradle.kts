@@ -22,6 +22,7 @@ dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
     implementation("io.ktor:ktor-server-auth-jvm")
+    implementation("io.ktor:ktor-server-auth-jwt-jvm")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
     implementation("ch.qos.logback:logback-classic:$logback_version")
@@ -33,6 +34,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.50.1")
     implementation("org.postgresql:postgresql:42.7.2")
     implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("org.mindrot:jbcrypt:0.4")
 
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")

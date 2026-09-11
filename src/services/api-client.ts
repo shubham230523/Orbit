@@ -1,6 +1,8 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
 
+const TOKEN_KEY = 'orbit_auth_token';
 const API_URL = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
 
 export const apiClient = axios.create({
@@ -11,7 +13,10 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  // Add auth token here later
+  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 

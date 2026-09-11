@@ -6,15 +6,19 @@ import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native
 import { useColorScheme } from 'react-native';
 import '@/global.css';
 
+import { useAuthStore } from '@/store/use-auth-store';
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const initSession = useAuthStore((state) => state.initSession);
 
   useEffect(() => {
-    // Hide splash screen after foundation is ready
-    SplashScreen.hideAsync();
-  }, []);
+    initSession().then(() => {
+      SplashScreen.hideAsync();
+    });
+  }, [initSession]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
