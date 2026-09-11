@@ -36,6 +36,12 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.mindrot:jbcrypt:0.4")
 
+    // Ktor Client for AI API calls
+    implementation("io.ktor:ktor-client-core-jvm")
+    implementation("io.ktor:ktor-client-cio-jvm")
+    implementation("io.ktor:ktor-client-content-negotiation-jvm")
+    implementation("io.ktor:ktor-client-serialization-jvm")
+
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }

@@ -1,5 +1,8 @@
 package com.orbit
 
+import com.orbit.ai.AIRoutes
+import com.orbit.ai.GoalAnalysisWorkflow
+import com.orbit.ai.MockAIProvider
 import com.orbit.auth.AuthService
 import com.orbit.auth.authRoutes
 import com.orbit.goals.goalRoutes
@@ -45,6 +48,9 @@ fun Application.module() {
 
     val userRepository = ExposedUserRepository()
     val goalRepository = ExposedGoalRepository()
+    val aiProvider = MockAIProvider() // Use GeminiProvider in production
+    val goalWorkflow = GoalAnalysisWorkflow(aiProvider)
+    
     val authService = AuthService(
         userRepository,
         jwtSecret = jwtSecret,
@@ -55,6 +61,7 @@ fun Application.module() {
     routing {
         authRoutes(authService)
         goalRoutes(goalRepository)
+        com.orbit.ai.aiRoutes(goalWorkflow)
         get("/") {
             io.ktor.server.response.respondText("Orbit API is running")
         }
