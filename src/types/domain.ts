@@ -32,6 +32,16 @@ export interface Milestone {
   dueDate?: string;
 }
 
+export interface ScheduleBlock {
+  id: string;
+  userId: string;
+  taskId?: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  type: 'TASK' | 'EVENT' | 'FOCUS' | 'BREAK';
+}
+
 export interface Task {
   id: string;
   goalId?: string;

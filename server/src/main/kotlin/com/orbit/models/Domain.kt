@@ -92,3 +92,19 @@ data class Project(
 enum class ProjectStatus {
     ACTIVE, COMPLETED, ARCHIVED
 }
+
+@Serializable
+data class ScheduleBlock(
+    val id: String,
+    val userId: String,
+    val taskId: String? = null,
+    val title: String,
+    val startTime: String,
+    val endTime: String,
+    val type: ScheduleBlockType = ScheduleBlockType.TASK
+)
+
+@Serializable
+enum class ScheduleBlockType {
+    TASK, EVENT, FOCUS, BREAK
+}

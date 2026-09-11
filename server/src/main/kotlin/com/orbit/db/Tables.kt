@@ -63,3 +63,15 @@ object Milestones : Table("milestones") {
 
     override val primaryKey = PrimaryKey(id)
 }
+
+object ScheduleBlocks : Table("schedule_blocks") {
+    val id = varchar("id", 50)
+    val userId = varchar("user_id", 50) references Users.id
+    val taskId = varchar("task_id", 50).references(Tasks.id).nullable()
+    val title = varchar("title", 255)
+    val startTime = varchar("start_time", 50)
+    val endTime = varchar("end_time", 50)
+    val type = varchar("type", 50)
+
+    override val primaryKey = PrimaryKey(id)
+}
