@@ -10,6 +10,7 @@ import com.orbit.goals.goalRoutes
 import com.orbit.goals.roadmapRoutes
 import com.orbit.tasks.taskRoutes
 import com.orbit.scheduling.scheduleRoutes
+import com.orbit.calendar.MockCalendarProvider
 import com.orbit.repositories.ExposedGoalRepository
 import com.orbit.repositories.ExposedUserRepository
 import com.orbit.repositories.ExposedRoadmapRepository
@@ -59,6 +60,7 @@ fun Application.module() {
     val roadmapRepository = ExposedRoadmapRepository()
     val taskRepository = ExposedTaskRepository()
     val scheduleRepository = ExposedScheduleRepository()
+    val calendarProvider = MockCalendarProvider()
     
     val aiProvider = MockAIProvider() // Use GeminiProvider in production
     val goalWorkflow = GoalAnalysisWorkflow(aiProvider)
@@ -77,7 +79,7 @@ fun Application.module() {
         goalRoutes(goalRepository)
         roadmapRoutes(roadmapRepository, goalRepository, roadmapWorkflow)
         taskRoutes(taskRepository)
-        scheduleRoutes(scheduleRepository, taskRepository, schedulerWorkflow)
+        scheduleRoutes(scheduleRepository, taskRepository, calendarProvider, schedulerWorkflow)
         com.orbit.ai.aiRoutes(goalWorkflow)
         get("/") {
             io.ktor.server.response.respondText("Orbit API is running")
