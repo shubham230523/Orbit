@@ -64,6 +64,7 @@ fun Application.module() {
     val insightWorkflow = InsightWorkflow(aiProvider)
     val coachWorkflow = CoachWorkflow(aiProvider)
     val replanWorkflow = ReplanningWorkflow(aiProvider)
+    val researchWorkflow = ResearchWorkflow(aiProvider)
     
     val authService = AuthService(
         userRepository,
@@ -83,7 +84,8 @@ fun Application.module() {
         aiExtendedRoutes(
             insightWorkflow, 
             coachWorkflow, 
-            replanWorkflow, 
+            replanWorkflow,
+            researchWorkflow,
             goalRepository, 
             taskRepository, 
             insightRepository

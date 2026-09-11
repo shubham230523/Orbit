@@ -18,12 +18,23 @@ fun Route.aiExtendedRoutes(
     insightWorkflow: InsightWorkflow,
     coachWorkflow: CoachWorkflow,
     replanWorkflow: ReplanningWorkflow,
+    researchWorkflow: ResearchWorkflow,
     goalRepository: GoalRepository,
     taskRepository: TaskRepository,
     insightRepository: InsightRepository
 ) {
     authenticate {
         route("/ai") {
+            post("/research") {
+                val request = call.receive<ResearchRequest>()
+                try {
+                    val result = researchWorkflow.research(request.topic)
+                    call.respond(result)
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, e.message ?: "Research failed")
+                }
+            }
+
             post("/generate-insights") {
                 val principal = call.principal<JWTPrincipal>()
                 val userId = principal?.payload?.getClaim("userId")?.asString() ?: ""
@@ -66,6 +77,9 @@ fun Route.aiExtendedRoutes(
         }
     }
 }
+
+@kotlinx.serialization.Serializable
+data class ResearchRequest(val topic: String)
 
 @kotlinx.serialization.Serializable
 data class ChatRequest(val message: String)
