@@ -94,3 +94,45 @@ object HabitEntries : Table("habit_entries") {
 
     override val primaryKey = PrimaryKey(id)
 }
+
+object ProgressSnapshots : Table("progress_snapshots") {
+    val id = varchar("id", 50)
+    val userId = varchar("user_id", 50) references Users.id
+    val goalId = varchar("goal_id", 50).references(Goals.id).nullable()
+    val date = varchar("date", 50)
+    val completionRate = double("completion_rate")
+    val tasksCompleted = integer("tasks_completed")
+    val habitsCompleted = integer("habits_completed")
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object Insights : Table("insights") {
+    val id = varchar("id", 50)
+    val userId = varchar("user_id", 50) references Users.id
+    val title = varchar("title", 255)
+    val description = text("description")
+    val type = varchar("type", 50)
+    val createdAt = varchar("created_at", 50)
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object Conversations : Table("conversations") {
+    val id = varchar("id", 50)
+    val userId = varchar("user_id", 50) references Users.id
+    val title = varchar("title", 255)
+    val createdAt = varchar("created_at", 50)
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object Messages : Table("messages") {
+    val id = varchar("id", 50)
+    val conversationId = varchar("conversation_id", 50) references Conversations.id
+    val role = varchar("role", 20)
+    val content = text("content")
+    val createdAt = varchar("created_at", 50)
+
+    override val primaryKey = PrimaryKey(id)
+}

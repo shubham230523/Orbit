@@ -130,3 +130,46 @@ data class HabitEntry(
     val date: String,
     val completed: Boolean
 )
+
+@Serializable
+data class ProgressSnapshot(
+    val id: String,
+    val userId: String,
+    val goalId: String? = null,
+    val date: String,
+    val completionRate: Double,
+    val tasksCompleted: Int,
+    val habitsCompleted: Int
+)
+
+@Serializable
+data class Insight(
+    val id: String,
+    val userId: String,
+    val title: String,
+    val description: String,
+    val type: InsightType = InsightType.PRODUCTIVITY,
+    val createdAt: String
+)
+
+@Serializable
+enum class InsightType {
+    PRODUCTIVITY, GOAL, HABIT, WORKLOAD
+}
+
+@Serializable
+data class Conversation(
+    val id: String,
+    val userId: String,
+    val title: String,
+    val createdAt: String
+)
+
+@Serializable
+data class Message(
+    val id: String,
+    val conversationId: String,
+    val role: String, // "user" or "assistant"
+    val content: String,
+    val createdAt: String
+)

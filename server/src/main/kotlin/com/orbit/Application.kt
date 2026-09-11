@@ -1,9 +1,6 @@
 package com.orbit
 
-import com.orbit.ai.AIRoutes
-import com.orbit.ai.GoalAnalysisWorkflow
-import com.orbit.ai.RoadmapWorkflow
-import com.orbit.ai.MockAIProvider
+import com.orbit.ai.*
 import com.orbit.auth.AuthService
 import com.orbit.auth.authRoutes
 import com.orbit.goals.goalRoutes
@@ -12,13 +9,7 @@ import com.orbit.tasks.taskRoutes
 import com.orbit.scheduling.scheduleRoutes
 import com.orbit.habits.habitRoutes
 import com.orbit.calendar.MockCalendarProvider
-import com.orbit.repositories.ExposedGoalRepository
-import com.orbit.repositories.ExposedUserRepository
-import com.orbit.repositories.ExposedRoadmapRepository
-import com.orbit.repositories.ExposedTaskRepository
-import com.orbit.repositories.ExposedScheduleRepository
-import com.orbit.repositories.ExposedHabitRepository
-import com.orbit.ai.SchedulerWorkflow
+import com.orbit.repositories.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -63,12 +54,16 @@ fun Application.module() {
     val taskRepository = ExposedTaskRepository()
     val scheduleRepository = ExposedScheduleRepository()
     val habitRepository = ExposedHabitRepository()
+    val insightRepository = ExposedInsightRepository()
     val calendarProvider = MockCalendarProvider()
     
     val aiProvider = MockAIProvider() // Use GeminiProvider in production
     val goalWorkflow = GoalAnalysisWorkflow(aiProvider)
     val roadmapWorkflow = RoadmapWorkflow(aiProvider)
     val schedulerWorkflow = SchedulerWorkflow(aiProvider)
+    val insightWorkflow = InsightWorkflow(aiProvider)
+    val coachWorkflow = CoachWorkflow(aiProvider)
+    val replanWorkflow = ReplanningWorkflow(aiProvider)
     
     val authService = AuthService(
         userRepository,
@@ -84,7 +79,15 @@ fun Application.module() {
         taskRoutes(taskRepository)
         scheduleRoutes(scheduleRepository, taskRepository, calendarProvider, schedulerWorkflow)
         habitRoutes(habitRepository)
-        com.orbit.ai.aiRoutes(goalWorkflow)
+        aiRoutes(goalWorkflow)
+        aiExtendedRoutes(
+            insightWorkflow, 
+            coachWorkflow, 
+            replanWorkflow, 
+            goalRepository, 
+            taskRepository, 
+            insightRepository
+        )
         get("/") {
             io.ktor.server.response.respondText("Orbit API is running")
         }
