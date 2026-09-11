@@ -21,6 +21,8 @@ fun Route.scheduleRoutes(
     calendarProvider: CalendarProvider,
     schedulerWorkflow: SchedulerWorkflow
 ) {
+    val validator = ScheduleValidator()
+
     authenticate {
         route("/schedule") {
             get {
@@ -69,6 +71,30 @@ fun Route.scheduleRoutes(
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, e.message ?: "Scheduling failed")
                 }
+            }
+
+            post("/save") {
+                val principal = call.principal<JWTPrincipal>()
+                val userId = principal?.payload?.getClaim("userId")?.asString() ?: ""
+                val request = call.receive<com.orbit.ai.SchedulerAIResponse>()
+                
+                val tasks = taskRepository.getTasksByUser(userId)
+                val rawBlocks = request.schedule.map { 
+                    com.orbit.models.ScheduleBlock(
+                        id = UUID.randomUUID().toString(),
+                        userId = userId,
+                        taskId = it.taskId,
+                        title = tasks.find { t -> t.id == it.taskId }?.title ?: "Scheduled Task",
+                        startTime = it.startTime,
+                        endTime = it.endTime
+                    )
+                }
+
+                val blocks = validator.validate(rawBlocks, tasks)
+
+                scheduleRepository.clearSchedule(userId)
+                scheduleRepository.createSchedule(blocks)
+                call.respond(HttpStatusCode.Created, blocks)
             }
         }
     }

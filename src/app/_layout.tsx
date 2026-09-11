@@ -7,7 +7,9 @@ import { useColorScheme } from 'react-native';
 import '@/global.css';
 
 import { useAuthStore } from '@/store/use-auth-store';
+import { useAIStore } from '@/store/use-ai-store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
 
 const queryClient = new QueryClient();
 
@@ -16,12 +18,27 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const initSession = useAuthStore((state) => state.initSession);
+  const { providerType, isModelDownloaded } = useAIStore();
 
   useEffect(() => {
-    initSession().then(() => {
+    const init = async () => {
+      await initSession();
+
+      // Initialize AI Provider
+      try {
+        const provider = AIProviderFactory.getProvider();
+        if (provider.getType() === 'LOCAL' && isModelDownloaded) {
+          await provider.initialize();
+        }
+      } catch (e) {
+        console.warn('AI initialization failed', e);
+      }
+
       SplashScreen.hideAsync();
-    });
-  }, [initSession]);
+    };
+
+    init();
+  }, [initSession, isModelDownloaded]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

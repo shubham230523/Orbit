@@ -13,19 +13,19 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Spacing } from '@/constants/theme';
 import { Sparkles } from 'lucide-react-native';
 
+import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
+
 export default function GoalRoadmapScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['roadmap', id],
-    queryFn: () => goalService.getRoadmap(id),
-    retry: false,
-  });
+  // ... queries
 
   const generateMutation = useMutation({
-    mutationFn: () => goalService.generateRoadmap(id),
+    mutationFn: async () => {
+      return goalService.generateRoadmap(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roadmap', id] });
     },

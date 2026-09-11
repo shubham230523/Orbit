@@ -41,6 +41,28 @@ jest.mock('@react-native-community/datetimepicker', () => {
   };
 });
 
+// Mock NativeModules
+const { NativeModules } = require('react-native');
+NativeModules.LlamaModule = {
+  loadModel: jest.fn().mockResolvedValue(undefined),
+  infer: jest.fn().mockResolvedValue({ text: 'Mock generated text', tokensPerSecond: 10 }),
+  cancel: jest.fn().mockResolvedValue(undefined),
+  unloadModel: jest.fn().mockResolvedValue(undefined),
+};
+
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(),
+  getItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+  getAllKeys: jest.fn(),
+  multiGet: jest.fn(),
+  multiSet: jest.fn(),
+  multiRemove: jest.fn(),
+  multiMerge: jest.fn(),
+}));
+
 // Mock hooks
 jest.mock('@/hooks/use-theme', () => ({
   useTheme: () => ({

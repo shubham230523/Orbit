@@ -16,11 +16,15 @@ import { generateId } from '@/utils/id';
 import { useAuthStore } from '@/store/use-auth-store';
 import { toISO } from '@/utils/date';
 
+import { useAIStore } from '@/store/use-ai-store';
+import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
+
 export default function GoalsScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [isModalVisible, setModalVisible] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const { data: goals, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['goals'],
@@ -33,21 +37,40 @@ export default function GoalsScreen() {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       setModalVisible(false);
       setNewGoalTitle('');
+      setIsAnalyzing(false);
     },
   });
 
-  const handleCreateGoal = () => {
+  const handleCreateGoal = async () => {
     if (!newGoalTitle.trim() || !user) return;
 
-    createGoalMutation.mutate({
-      id: generateId(),
-      userId: user.id,
-      title: newGoalTitle,
-      status: 'active',
-      priority: 'medium',
-      createdAt: toISO(new Date()),
-      updatedAt: toISO(new Date()),
-    });
+    setIsAnalyzing(true);
+    try {
+      const provider = AIProviderFactory.getProvider();
+      const analysis = await provider.analyzeGoal(newGoalTitle);
+
+      createGoalMutation.mutate({
+        id: generateId(),
+        userId: user.id,
+        title: newGoalTitle,
+        description: analysis.objective,
+        status: 'active',
+        priority: 'medium',
+        createdAt: toISO(new Date()),
+        updatedAt: toISO(new Date()),
+      });
+    } catch (e) {
+      console.warn('AI analysis failed, falling back to basic creation', e);
+      createGoalMutation.mutate({
+        id: generateId(),
+        userId: user.id,
+        title: newGoalTitle,
+        status: 'active',
+        priority: 'medium',
+        createdAt: toISO(new Date()),
+        updatedAt: toISO(new Date()),
+      });
+    }
   };
 
   if (isLoading) return <LoadingState />;
@@ -55,6 +78,31 @@ export default function GoalsScreen() {
 
   return (
     <Screen scrollable={false}>
+      {/* ... */}
+      <Modal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        title="Create New Goal"
+      >
+        <View style={styles.modalContent}>
+          <TextInput
+            label="What is your goal?"
+            placeholder="e.g. Learn React Native"
+            value={newGoalTitle}
+            onChangeText={setNewGoalTitle}
+            autoFocus
+          />
+          <Button
+            title={isAnalyzing ? 'Analyzing with AI...' : 'Create Goal'}
+            onPress={handleCreateGoal}
+            loading={createGoalMutation.isPending || isAnalyzing}
+            disabled={!newGoalTitle.trim()}
+          />
+        </View>
+      </Modal>
+    </Screen>
+  );
+}
       <FlatList
         data={goals}
         keyExtractor={(item) => item.id}

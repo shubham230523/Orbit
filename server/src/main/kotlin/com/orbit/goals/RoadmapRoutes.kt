@@ -62,6 +62,33 @@ fun Route.roadmapRoutes(
                     call.respond(HttpStatusCode.InternalServerError, e.message ?: "Roadmap generation failed")
                 }
             }
+
+            post("/save") {
+                val goalId = call.parameters["goalId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                val goal = goalRepository.getGoal(goalId) ?: return@post call.respond(HttpStatusCode.NotFound)
+                val request = call.receive<com.orbit.ai.RoadmapAIResponse>()
+
+                val roadmapId = UUID.randomUUID().toString()
+                val roadmap = Roadmap(
+                    id = roadmapId,
+                    goalId = goalId,
+                    title = "Roadmap for ${goal.title}",
+                    createdAt = "2026-09-11T12:00:00" // Use actual time
+                )
+                val milestones = request.milestones.map {
+                    Milestone(
+                        id = UUID.randomUUID().toString(),
+                        roadmapId = roadmapId,
+                        title = it.title,
+                        description = it.description,
+                        status = MilestoneStatus.TODO,
+                        dueDate = null
+                    )
+                }
+
+                roadmapRepository.createRoadmap(roadmap, milestones)
+                call.respond(HttpStatusCode.Created, mapOf("roadmap" to roadmap, "milestones" to milestones))
+            }
         }
     }
 }
