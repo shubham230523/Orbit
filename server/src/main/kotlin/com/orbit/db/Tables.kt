@@ -136,3 +136,13 @@ object Messages : Table("messages") {
 
     override val primaryKey = PrimaryKey(id)
 }
+
+object Memories : Table("memories") {
+    val id = varchar("id", 50)
+    val userId = varchar("user_id", 50) references Users.id
+    val content = text("content")
+    val importance = integer("importance")
+    val createdAt = varchar("created_at", 50)
+
+    override val primaryKey = PrimaryKey(id)
+}

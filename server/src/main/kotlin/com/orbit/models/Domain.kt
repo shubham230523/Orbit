@@ -173,3 +173,12 @@ data class Message(
     val content: String,
     val createdAt: String
 )
+
+@Serializable
+data class Memory(
+    val id: String,
+    val userId: String,
+    val content: String,
+    val importance: Int = 1,
+    val createdAt: String
+)
