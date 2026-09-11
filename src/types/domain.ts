@@ -42,6 +42,21 @@ export interface ScheduleBlock {
   type: 'TASK' | 'EVENT' | 'FOCUS' | 'BREAK';
 }
 
+export interface Habit {
+  id: string;
+  userId: string;
+  title: string;
+  frequency: 'DAILY' | 'WEEKLY';
+  createdAt: string;
+}
+
+export interface HabitEntry {
+  id: string;
+  habitId: string;
+  date: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   goalId?: string;

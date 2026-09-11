@@ -108,3 +108,25 @@ data class ScheduleBlock(
 enum class ScheduleBlockType {
     TASK, EVENT, FOCUS, BREAK
 }
+
+@Serializable
+data class Habit(
+    val id: String,
+    val userId: String,
+    val title: String,
+    val frequency: HabitFrequency = HabitFrequency.DAILY,
+    val createdAt: String
+)
+
+@Serializable
+enum class HabitFrequency {
+    DAILY, WEEKLY
+}
+
+@Serializable
+data class HabitEntry(
+    val id: String,
+    val habitId: String,
+    val date: String,
+    val completed: Boolean
+)

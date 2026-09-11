@@ -8,7 +8,8 @@ import {
   Zap,
   BarChart2,
   Settings,
-  Clock
+  Clock,
+  RotateCw
 } from 'lucide-react-native';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -49,6 +50,13 @@ export default function TabLayout() {
         options={{
           title: 'Tasks',
           tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="habits/index"
+        options={{
+          title: 'Habits',
+          tabBarIcon: ({ color, size }) => <RotateCw color={color} size={size} />,
         }}
       />
       <Tabs.Screen

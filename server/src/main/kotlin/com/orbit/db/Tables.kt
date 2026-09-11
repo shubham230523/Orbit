@@ -75,3 +75,22 @@ object ScheduleBlocks : Table("schedule_blocks") {
 
     override val primaryKey = PrimaryKey(id)
 }
+
+object Habits : Table("habits") {
+    val id = varchar("id", 50)
+    val userId = varchar("user_id", 50) references Users.id
+    val title = varchar("title", 255)
+    val frequency = varchar("frequency", 50)
+    val createdAt = varchar("created_at", 50)
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object HabitEntries : Table("habit_entries") {
+    val id = varchar("id", 50)
+    val habitId = varchar("habit_id", 50) references Habits.id
+    val date = varchar("date", 50)
+    val completed = bool("completed")
+
+    override val primaryKey = PrimaryKey(id)
+}
