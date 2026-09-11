@@ -29,7 +29,7 @@ export const Switch = ({ value, onValueChange, style }: SwitchProps) => {
   });
 
   return (
-    <Pressable onPress={() => onValueChange(!value)} style={style}>
+    <Pressable onPress={() => onValueChange(!value)} style={style} testID="switch-root">
       <Animated.View style={[styles.track, animatedStyle]}>
         <Animated.View style={[styles.thumb, { backgroundColor: colors.background }, thumbStyle]} />
       </Animated.View>

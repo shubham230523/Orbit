@@ -21,7 +21,7 @@ export const ErrorState = ({
   const colors = useTheme();
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} testID="ErrorState">
       <AlertCircle size={48} color="#C62828" />
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>

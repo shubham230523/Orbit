@@ -12,7 +12,7 @@ export const LoadingState = ({ message, style }: LoadingStateProps) => {
   const colors = useTheme();
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} testID="LoadingState">
       <ActivityIndicator size="large" color={colors.text} />
       {message && (
         <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>

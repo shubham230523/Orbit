@@ -78,31 +78,6 @@ export default function GoalsScreen() {
 
   return (
     <Screen scrollable={false}>
-      {/* ... */}
-      <Modal
-        visible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        title="Create New Goal"
-      >
-        <View style={styles.modalContent}>
-          <TextInput
-            label="What is your goal?"
-            placeholder="e.g. Learn React Native"
-            value={newGoalTitle}
-            onChangeText={setNewGoalTitle}
-            autoFocus
-          />
-          <Button
-            title={isAnalyzing ? 'Analyzing with AI...' : 'Create Goal'}
-            onPress={handleCreateGoal}
-            loading={createGoalMutation.isPending || isAnalyzing}
-            disabled={!newGoalTitle.trim()}
-          />
-        </View>
-      </Modal>
-    </Screen>
-  );
-}
       <FlatList
         data={goals}
         keyExtractor={(item) => item.id}
@@ -139,9 +114,9 @@ export default function GoalsScreen() {
             autoFocus
           />
           <Button
-            title="Create Goal"
+            title={isAnalyzing ? 'Analyzing with AI...' : 'Create Goal'}
             onPress={handleCreateGoal}
-            loading={createGoalMutation.isPending}
+            loading={createGoalMutation.isPending || isAnalyzing}
             disabled={!newGoalTitle.trim()}
           />
         </View>

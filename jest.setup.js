@@ -17,7 +17,36 @@ jest.mock('lucide-react-native', () => {
 });
 
 // Mock reanimated
-jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      View: (props) => React.createElement(View, props),
+      Text: (props) => React.createElement(View, props),
+      createAnimatedComponent: (cb) => cb,
+    },
+    useAnimatedStyle: (cb) => cb(),
+    useSharedValue: (val) => ({ value: val }),
+    withSpring: (val) => val,
+    withTiming: (val) => val,
+    withRepeat: (val) => val,
+    FadeIn: { duration: () => ({ withCallback: (cb) => cb() }) },
+    useAnimatedProps: (cb) => cb(),
+    interpolateColor: (val, input, output) => output[0],
+    makeMutable: (val) => ({ value: val }),
+  };
+});
+
+// Mock worklets
+jest.mock('react-native-worklets', () => ({
+  Worklets: {
+    createRunInJsFn: (fn) => fn,
+    createWorklet: (fn) => fn,
+  },
+  createSerializable: (v) => v,
+}));
 
 // Mock bottom-sheet
 jest.mock('@gorhom/bottom-sheet', () => {

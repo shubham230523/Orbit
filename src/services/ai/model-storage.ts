@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system';
-import { isWeb } from '@/platform';
+import { isWeb as isWebPlatform } from '@/platform';
 
 export interface ModelStorage {
   getModelPath(): string;
@@ -11,13 +11,17 @@ export interface ModelStorage {
 export class ExpoModelStorage implements ModelStorage {
   private fileName = 'model.gguf';
 
+  protected isWeb(): boolean {
+    return isWebPlatform;
+  }
+
   getModelPath(): string {
-    if (isWeb) return 'indexeddb://model.gguf';
+    if (this.isWeb()) return 'indexeddb://model.gguf';
     return `${FileSystem.documentDirectory}${this.fileName}`;
   }
 
   async exists(): Promise<boolean> {
-    if (isWeb) return false;
+    if (this.isWeb()) return false;
     try {
       const info = await FileSystem.getInfoAsync(this.getModelPath());
       return info.exists;
@@ -27,12 +31,12 @@ export class ExpoModelStorage implements ModelStorage {
   }
 
   async delete(): Promise<void> {
-    if (isWeb) return;
+    if (this.isWeb()) return;
     await FileSystem.deleteAsync(this.getModelPath(), { idempotent: true });
   }
 
   async getFreeDiskSpace(): Promise<number> {
-    if (isWeb) return 1024 * 1024 * 1024;
+    if (this.isWeb()) return 1024 * 1024 * 1024;
     return FileSystem.getFreeDiskStorageAsync();
   }
 }
