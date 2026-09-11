@@ -1,7 +1,18 @@
 import { apiClient } from './api-client';
-import { Goal } from '@/types/domain';
+import { Goal, Roadmap, Milestone } from '@/types/domain';
 
 export const goalService = {
+  // ... existing methods
+  async getRoadmap(goalId: string): Promise<{ roadmap: Roadmap; milestones: Milestone[] }> {
+    const response = await apiClient.get<{ roadmap: Roadmap; milestones: Milestone[] }>(`/goals/${goalId}/roadmap`);
+    return response.data;
+  },
+
+  async generateRoadmap(goalId: string): Promise<{ roadmap: Roadmap; milestones: Milestone[] }> {
+    const response = await apiClient.post<{ roadmap: Roadmap; milestones: Milestone[] }>(`/goals/${goalId}/roadmap/generate`);
+    return response.data;
+  },
+};
   async getGoals(): Promise<Goal[]> {
     const response = await apiClient.get<Goal[]>('/goals');
     return response.data;

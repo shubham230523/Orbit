@@ -19,7 +19,7 @@ export const TaskCard = ({ task, onPress, onToggleComplete }: TaskCardProps) => 
   return (
     <Card style={styles.card}>
       <Pressable onPress={onPress} style={styles.container}>
-        <Pressable onPress={onToggleComplete} hitSlop={10}>
+        <Pressable onPress={onToggleComplete} hitSlop={10} testID="task-toggle">
           {task.status === 'completed' ? (
             <CheckCircle2 size={24} color="#2E7D32" />
           ) : (

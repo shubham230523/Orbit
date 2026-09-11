@@ -2,12 +2,17 @@ package com.orbit
 
 import com.orbit.ai.AIRoutes
 import com.orbit.ai.GoalAnalysisWorkflow
+import com.orbit.ai.RoadmapWorkflow
 import com.orbit.ai.MockAIProvider
 import com.orbit.auth.AuthService
 import com.orbit.auth.authRoutes
 import com.orbit.goals.goalRoutes
+import com.orbit.goals.roadmapRoutes
+import com.orbit.tasks.taskRoutes
 import com.orbit.repositories.ExposedGoalRepository
 import com.orbit.repositories.ExposedUserRepository
+import com.orbit.repositories.ExposedRoadmapRepository
+import com.orbit.repositories.ExposedTaskRepository
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -48,8 +53,12 @@ fun Application.module() {
 
     val userRepository = ExposedUserRepository()
     val goalRepository = ExposedGoalRepository()
+    val roadmapRepository = ExposedRoadmapRepository()
+    val taskRepository = ExposedTaskRepository()
+    
     val aiProvider = MockAIProvider() // Use GeminiProvider in production
     val goalWorkflow = GoalAnalysisWorkflow(aiProvider)
+    val roadmapWorkflow = RoadmapWorkflow(aiProvider)
     
     val authService = AuthService(
         userRepository,
@@ -61,6 +70,8 @@ fun Application.module() {
     routing {
         authRoutes(authService)
         goalRoutes(goalRepository)
+        roadmapRoutes(roadmapRepository, goalRepository, roadmapWorkflow)
+        taskRoutes(taskRepository)
         com.orbit.ai.aiRoutes(goalWorkflow)
         get("/") {
             io.ktor.server.response.respondText("Orbit API is running")

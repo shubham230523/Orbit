@@ -43,3 +43,23 @@ object Tasks : Table("tasks") {
 
     override val primaryKey = PrimaryKey(id)
 }
+
+object Roadmaps : Table("roadmaps") {
+    val id = varchar("id", 50)
+    val goalId = varchar("goal_id", 50).references(Goals.id)
+    val title = varchar("title", 255)
+    val createdAt = varchar("created_at", 50)
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object Milestones : Table("milestones") {
+    val id = varchar("id", 50)
+    val roadmapId = varchar("roadmap_id", 50).references(Roadmaps.id)
+    val title = varchar("title", 255)
+    val description = text("description").nullable()
+    val status = varchar("status", 50)
+    val dueDate = varchar("due_date", 50).nullable()
+
+    override val primaryKey = PrimaryKey(id)
+}

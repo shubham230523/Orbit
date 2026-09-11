@@ -16,6 +16,22 @@ export interface Goal {
   updatedAt: string;
 }
 
+export interface Roadmap {
+  id: string;
+  goalId: string;
+  title: string;
+  createdAt: string;
+}
+
+export interface Milestone {
+  id: string;
+  roadmapId: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'completed';
+  dueDate?: string;
+}
+
 export interface Task {
   id: string;
   goalId?: string;
