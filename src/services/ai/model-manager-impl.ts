@@ -1,12 +1,12 @@
 import { LocalModelStatus, ModelMetadata } from './types';
-import { ModelManager, ModelDownloadProgress, QWEN_1_5B_METADATA } from './model-manager';
+import { ModelManager, ModelDownloadProgress, QWEN_0_5B_METADATA } from './model-manager';
 import { ModelStorage } from './model-storage';
 import { ModelDownloader } from './model-downloader';
 import { useAIStore } from '@/store/use-ai-store';
 
 export class ModelManagerImpl implements ModelManager {
   private status: LocalModelStatus = LocalModelStatus.NOT_INSTALLED;
-  private modelUrl = 'https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf';
+  private modelUrl = 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf';
 
   constructor(
     private storage: ModelStorage,
@@ -20,7 +20,7 @@ export class ModelManagerImpl implements ModelManager {
   }
 
   getMetadata(): ModelMetadata {
-    return QWEN_1_5B_METADATA;
+    return QWEN_0_5B_METADATA;
   }
 
   private async checkStatus() {

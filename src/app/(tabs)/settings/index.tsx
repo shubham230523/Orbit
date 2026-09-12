@@ -68,8 +68,8 @@ export default function SettingsScreen() {
         <Card style={styles.card}>
           <View style={styles.modelRow}>
             <View>
-              <ThemedText type="bodyBold">Qwen2.5-1.5B-Instruct</ThemedText>
-              <ThemedText type="small">Size: ~986MB • Format: GGUF</ThemedText>
+              <ThemedText type="bodyBold">Qwen2.5-0.5B-Instruct</ThemedText>
+              <ThemedText type="small">Size: ~398MB • Format: GGUF</ThemedText>
             </View>
             {isModelDownloaded ? (
               <CheckCircle size={24} color="green" />
