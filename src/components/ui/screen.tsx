@@ -17,6 +17,7 @@ export interface ScreenProps {
   contentContainerStyle?: ViewStyle;
   scrollable?: boolean;
   withSafeArea?: boolean;
+  centered?: boolean;
 }
 
 export const Screen = ({
@@ -25,6 +26,7 @@ export const Screen = ({
   contentContainerStyle,
   scrollable = true,
   withSafeArea = true,
+  centered = false,
 }: ScreenProps) => {
   const colors = useTheme();
 
@@ -42,11 +44,14 @@ export const Screen = ({
           contentContainerStyle={[
             styles.contentContainer,
             !scrollable && styles.flex,
+            centered && { flexGrow: 1, justifyContent: 'center' },
             contentContainerStyle,
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.innerContent}>{children}</View>
+          <View style={[styles.innerContent, centered && { paddingBottom: Spacing.six }]}>
+            {children}
+          </View>
         </ContentWrapper>
       </KeyboardAvoidingView>
     </Container>
