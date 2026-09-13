@@ -111,7 +111,9 @@ export const Button = ({
       ) : (
         <>
           {icon}
-          <Text style={[variantStyles.text, sizeStyles.text, textStyle]}>{title}</Text>
+          {title ? (
+            <Text style={[variantStyles.text, sizeStyles.text, textStyle]}>{title}</Text>
+          ) : null}
         </>
       )}
     </Pressable>

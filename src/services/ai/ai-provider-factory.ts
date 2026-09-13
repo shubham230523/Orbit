@@ -5,10 +5,13 @@ import { RemoteAIProvider } from './remote-ai-provider';
 import { useAIStore } from '@/store/use-ai-store';
 import { AndroidAIAdapter } from './android-ai-adapter';
 import { ExpoModelStorage } from './model-storage';
+import { ModelManagerImpl } from './model-manager-impl';
+import { ExpoModelDownloader } from './model-downloader';
 
 export class AIProviderFactory {
   private static localProvider: LocalAIProvider | null = null;
   private static remoteProvider = new RemoteAIProvider();
+  private static modelManager: ModelManagerImpl | null = null;
 
   static getProvider(): AIProvider {
     const type = useAIStore.getState().providerType;
@@ -22,6 +25,16 @@ export class AIProviderFactory {
     }
 
     return this.remoteProvider;
+  }
+
+  static getModelManager(): ModelManagerImpl {
+    if (!this.modelManager) {
+      this.modelManager = new ModelManagerImpl(
+        new ExpoModelStorage(),
+        new ExpoModelDownloader()
+      );
+    }
+    return this.modelManager;
   }
 
   private static createPlatformAdapter() {

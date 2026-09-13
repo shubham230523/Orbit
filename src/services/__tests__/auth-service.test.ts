@@ -1,11 +1,10 @@
 import { authService } from '../auth-service';
-import { apiClient } from '../api-client';
+import { runQuery, runExecute } from '@/db/client';
 import * as SecureStore from 'expo-secure-store';
 
-jest.mock('../api-client', () => ({
-  apiClient: {
-    post: jest.fn(),
-  },
+jest.mock('@/db/client', () => ({
+  runQuery: jest.fn(),
+  runExecute: jest.fn(),
 }));
 
 jest.mock('expo-secure-store', () => ({
@@ -14,10 +13,14 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(),
 }));
 
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'test-uuid'),
+}));
+
 describe('AuthService', () => {
   const mockAuthResponse = {
-    token: 'test-token',
-    userId: '1',
+    token: 'local-token-test-uuid',
+    userId: 'test-uuid',
     email: 'test@example.com',
   };
 
@@ -26,21 +29,29 @@ describe('AuthService', () => {
   });
 
   it('signs up correctly and saves session', async () => {
-    (apiClient.post as jest.Mock).mockResolvedValueOnce({ data: mockAuthResponse });
-    const result = await authService.signup({ email: 'test@example.com', password: 'password' });
+    (runExecute as jest.Mock).mockResolvedValueOnce(undefined);
+
+    const result = await authService.signup({ email: 'test@example.com', password: 'password', name: 'Test User' });
 
     expect(result).toEqual(mockAuthResponse);
-    expect(apiClient.post).toHaveBeenCalledWith('/auth/signup', { email: 'test@example.com', password: 'password' });
-    expect(SecureStore.setItemAsync).toHaveBeenCalledWith('orbit_auth_token', 'test-token');
-    expect(SecureStore.setItemAsync).toHaveBeenCalledWith('orbit_user_data', JSON.stringify({ userId: '1', email: 'test@example.com' }));
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO users'),
+      ['test-uuid', 'test@example.com', 'Test User']
+    );
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith('orbit_auth_token', 'local-token-test-uuid');
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith('orbit_user_data', JSON.stringify({ userId: 'test-uuid', email: 'test@example.com' }));
   });
 
   it('logs in correctly and saves session', async () => {
-    (apiClient.post as jest.Mock).mockResolvedValueOnce({ data: mockAuthResponse });
+    (runQuery as jest.Mock).mockResolvedValueOnce([{ id: 'test-uuid', email: 'test@example.com' }]);
+
     const result = await authService.login({ email: 'test@example.com', password: 'password' });
 
     expect(result).toEqual(mockAuthResponse);
-    expect(apiClient.post).toHaveBeenCalledWith('/auth/login', { email: 'test@example.com', password: 'password' });
+    expect(runQuery).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT * FROM users'),
+      ['test@example.com']
+    );
     expect(SecureStore.setItemAsync).toHaveBeenCalledTimes(2);
   });
 

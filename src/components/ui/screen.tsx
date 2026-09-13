@@ -36,7 +36,7 @@ export const Screen = ({
   return (
     <Container style={[styles.container, { backgroundColor: colors.background }, style]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
         <ContentWrapper

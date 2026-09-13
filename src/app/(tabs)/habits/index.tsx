@@ -13,7 +13,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Modal } from '@/components/ui/modal';
 import { TextInput } from '@/components/ui/text-input';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Radius } from '@/constants/theme';
 import { generateId } from '@/utils/id';
 import { useAuthStore } from '@/store/use-auth-store';
 import { toISO, formatDate } from '@/utils/date';
@@ -83,14 +83,15 @@ export default function HabitsScreen() {
           <EmptyState
             title="No habits tracked"
             description="Consistency is key. Start your first habit today."
+            style={{ flex: 1 }}
           />
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, habits?.length === 0 && { flex: 1 }]}
       />
 
       <Button
         icon={<Plus size={24} color="white" />}
-        title="Add Habit"
+        title=""
         onPress={() => setModalVisible(true)}
         style={styles.fab}
       />
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
     gap: Spacing.two,
+    flexGrow: 1,
   },
   habitCard: {
     padding: Spacing.three,
@@ -135,10 +137,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: Spacing.four,
     right: Spacing.four,
-    borderRadius: 30,
-    height: 60,
-    width: 150,
+    borderRadius: Radius.full,
+    height: 56,
+    width: 56,
     elevation: 5,
+    padding: 0,
   },
   modalContent: {
     gap: Spacing.four,

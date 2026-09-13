@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react-native';
 import { taskService } from '@/services/task-service';
 import { Screen } from '@/components/ui/screen';
+import { ThemedText } from '@/components/themed-text';
 import { TaskCard } from '@/components/ui/task-card';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -11,7 +12,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Modal } from '@/components/ui/modal';
 import { TextInput } from '@/components/ui/text-input';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Radius } from '@/constants/theme';
 import { generateId } from '@/utils/id';
 import { useAuthStore } from '@/store/use-auth-store';
 import { toISO } from '@/utils/date';
@@ -63,6 +64,10 @@ export default function TasksScreen() {
 
   return (
     <Screen scrollable={false}>
+      <View style={styles.header}>
+        <ThemedText type="title">Tasks</ThemedText>
+      </View>
+
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
@@ -77,14 +82,15 @@ export default function TasksScreen() {
           <EmptyState
             title="No tasks yet"
             description="Add tasks to your list to stay productive."
+            style={{ flex: 1 }}
           />
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, tasks?.length === 0 && { flex: 1 }]}
       />
 
       <Button
         icon={<Plus size={24} color="white" />}
-        title="Add Task"
+        title=""
         onPress={() => setModalVisible(true)}
         style={styles.fab}
       />
@@ -115,9 +121,13 @@ export default function TasksScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    marginBottom: Spacing.four,
+  },
   listContent: {
     paddingBottom: 100,
     paddingHorizontal: Spacing.two,
+    flexGrow: 1,
   },
   card: {
     marginBottom: Spacing.two,
@@ -126,14 +136,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: Spacing.four,
     right: Spacing.four,
-    borderRadius: 30,
-    height: 60,
-    width: 150,
+    borderRadius: Radius.full,
+    height: 56,
+    width: 56,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    padding: 0,
   },
   modalContent: {
     gap: Spacing.four,

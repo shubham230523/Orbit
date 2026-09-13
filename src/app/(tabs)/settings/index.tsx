@@ -9,10 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Spacing } from '@/constants/theme';
 import { Cpu, Cloud, Download, Trash2, CheckCircle } from 'lucide-react-native';
+import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
+import { ProgressBar } from '@/components/ui/progress-bar';
 
 export default function SettingsScreen() {
   const { providerType, setProviderType, isModelDownloaded, setIsModelDownloaded } = useAIStore();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   const toggleProvider = () => {
     setProviderType(
@@ -20,22 +23,37 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     setIsDownloading(true);
-    // Simulate download
-    setTimeout(() => {
+    setDownloadProgress(0);
+    try {
+      const manager = AIProviderFactory.getModelManager();
+      await manager.downloadModel((progress) => {
+        const percent = Math.round((progress.received / progress.total) * 100);
+        setDownloadProgress(percent);
+      });
+    } catch (error) {
+      console.error('Download failed', error);
+      alert('Download failed. Please check your internet connection.');
+    } finally {
       setIsDownloading(false);
-      setIsModelDownloaded(true);
-    }, 2000);
+    }
   };
 
-  const handleDeleteModel = () => {
-    setIsModelDownloaded(false);
+  const handleDeleteModel = async () => {
+    try {
+      const manager = AIProviderFactory.getModelManager();
+      await manager.deleteModel();
+    } catch (error) {
+      console.error('Delete failed', error);
+    }
   };
 
   return (
     <Screen>
-      <ThemedText type="title" style={styles.title}>Settings</ThemedText>
+      <View style={styles.header}>
+        <ThemedText type="title">Settings</ThemedText>
+      </View>
 
       <View style={styles.section}>
         <ThemedText type="subtitle">AI & Inference</ThemedText>
@@ -68,8 +86,8 @@ export default function SettingsScreen() {
         <Card style={styles.card}>
           <View style={styles.modelRow}>
             <View>
-              <ThemedText type="bodyBold">Qwen2.5-0.5B-Instruct</ThemedText>
-              <ThemedText type="small">Size: ~398MB • Format: GGUF</ThemedText>
+              <ThemedText type="bodyBold">Qwen2.5-1.5B-Instruct</ThemedText>
+              <ThemedText type="small">Size: ~986MB • Format: GGUF</ThemedText>
             </View>
             {isModelDownloaded ? (
               <CheckCircle size={24} color="green" />
@@ -84,6 +102,16 @@ export default function SettingsScreen() {
               />
             )}
           </View>
+
+          {isDownloading && (
+            <View style={styles.progressContainer}>
+              <View style={styles.progressHeader}>
+                <ThemedText type="smallBold">Downloading Model</ThemedText>
+                <ThemedText type="small">{downloadProgress}%</ThemedText>
+              </View>
+              <ProgressBar progress={downloadProgress / 100} color="#208AEF" />
+            </View>
+          )}
 
           {isModelDownloaded && (
             <Button
@@ -103,7 +131,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
+  header: {
     marginBottom: Spacing.four,
   },
   section: {
@@ -141,5 +169,14 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
     alignSelf: 'flex-start',
     paddingHorizontal: 0,
+  },
+  progressContainer: {
+    marginTop: Spacing.three,
+    gap: Spacing.one,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });

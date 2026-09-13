@@ -16,15 +16,17 @@ export const GoalCard = ({ goal, progress, onPress }: GoalCardProps) => {
   const colors = useTheme();
 
   return (
-    <Card style={styles.card}>
-      <Pressable onPress={onPress}>
+    <Card elevated style={[styles.card, { borderColor: colors.backgroundSelected, borderWidth: 1 }]}>
+      <Pressable onPress={onPress} android_ripple={{ color: colors.backgroundSelected }}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
             {goal.title}
           </Text>
-          <Text style={[styles.percentage, { color: colors.text }]}>
-            {Math.round(progress * 100)}%
-          </Text>
+          <View style={styles.percentageContainer}>
+            <Text style={styles.percentage}>
+              {Math.round(progress * 100)}%
+            </Text>
+          </View>
         </View>
 
         {goal.description && (
@@ -33,12 +35,17 @@ export const GoalCard = ({ goal, progress, onPress }: GoalCardProps) => {
           </Text>
         )}
 
-        <ProgressBar progress={progress} style={styles.progressBar} />
+        <View style={styles.progressWrapper}>
+          <ProgressBar progress={progress} color="#208AEF" height={6} />
+        </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.meta, { color: colors.textSecondary }]}>
-            Target: {goal.targetDate || 'No date'}
-          </Text>
+          <View style={styles.metaRow}>
+            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Target:</Text>
+            <Text style={[styles.metaValue, { color: colors.text }]}>
+              {goal.targetDate || 'No date'}
+            </Text>
+          </View>
         </View>
       </Pressable>
     </Card>
@@ -53,28 +60,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.one,
+    marginBottom: Spacing.two,
   },
   title: {
-    ...Typography.bodyBold,
+    ...Typography.h3,
+    fontSize: 18,
     flex: 1,
+  },
+  percentageContainer: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
+    backgroundColor: 'rgba(32, 138, 239, 0.1)',
+    borderRadius: Radius.small,
   },
   percentage: {
     ...Typography.small,
     fontWeight: '700',
+    color: '#208AEF',
   },
   description: {
     ...Typography.small,
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.three,
+    opacity: 0.8,
   },
-  progressBar: {
+  progressWrapper: {
     marginBottom: Spacing.two,
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
+    marginTop: Spacing.one,
   },
-  meta: {
+  metaRow: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+    alignItems: 'center',
+  },
+  metaLabel: {
     ...Typography.small,
+    fontSize: 12,
+  },
+  metaValue: {
+    ...Typography.small,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

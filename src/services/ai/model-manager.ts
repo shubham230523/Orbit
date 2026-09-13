@@ -13,9 +13,9 @@ export interface ModelManager {
   deleteModel(): Promise<void>;
 }
 
-export const QWEN_0_5B_METADATA: ModelMetadata = {
-  name: 'Qwen2.5-0.5B-Instruct',
+export const QWEN_1_5B_METADATA: ModelMetadata = {
+  name: 'Qwen2.5-1.5B-Instruct',
   version: '1.0.0',
-  size: 398000000, // ~398MB for Q4_K_M
+  size: 986000000, // ~986MB for Q4_K_M
   format: 'GGUF',
 };

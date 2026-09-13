@@ -23,7 +23,7 @@ apiClient.interceptors.request.use(async (config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle global errors here
+    console.error('API ERROR:', error.response?.status, error.message, error.config?.url);
     return Promise.reject(error);
   }
 );

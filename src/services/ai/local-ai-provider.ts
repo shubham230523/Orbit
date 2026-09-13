@@ -40,6 +40,11 @@ export class LocalAIProvider implements AIProvider {
     }
     this.status = LocalModelStatus.LOADING;
     try {
+      if (!this.adapter.isAvailable()) {
+        console.warn('AI Adapter is not available on this device. Local inference will be disabled.');
+        this.status = LocalModelStatus.FAILED;
+        return;
+      }
       await this.adapter.loadModel(this.storage.getModelPath());
       this.status = LocalModelStatus.LOADED;
     } catch (e) {

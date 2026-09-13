@@ -1,19 +1,69 @@
-import { apiClient } from './api-client';
+import { v4 as uuidv4 } from 'uuid';
+import { runQuery, runExecute } from '@/db/client';
 import { Habit, HabitEntry } from '@/types/domain';
+import { useAuthStore } from '@/store/use-auth-store';
 
 export const habitService = {
   async getHabits(): Promise<Habit[]> {
-    const response = await apiClient.get<Habit[]>('/habits');
-    return response.data;
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return [];
+
+    return await runQuery<Habit>(
+      'SELECT * FROM habits WHERE userId = ? ORDER BY createdAt DESC',
+      [userId]
+    );
   },
 
   async createHabit(habit: Partial<Habit>): Promise<Habit> {
-    const response = await apiClient.post<Habit>('/habits', habit);
-    return response.data;
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) throw new Error('Not authenticated');
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    const newHabit: Habit = {
+      id,
+      userId,
+      title: habit.title || '',
+      frequency: habit.frequency || 'DAILY',
+      createdAt: now,
+    };
+
+    await runExecute(
+      'INSERT INTO habits (id, userId, title, frequency, createdAt) VALUES (?, ?, ?, ?, ?)',
+      [newHabit.id, newHabit.userId, newHabit.title, newHabit.frequency, newHabit.createdAt]
+    );
+
+    return newHabit;
   },
 
   async logHabit(habitId: string, date: string, completed: boolean): Promise<HabitEntry> {
-    const response = await apiClient.post<HabitEntry>(`/habits/${habitId}/log`, { date, completed });
-    return response.data;
+    const id = uuidv4();
+    const completedInt = completed ? 1 : 0;
+
+    // Use INSERT OR REPLACE to handle the UNIQUE(habitId, date) constraint
+    await runExecute(
+      'INSERT OR REPLACE INTO habit_entries (id, habitId, date, completed) VALUES (?, ?, ?, ?)',
+      [id, habitId, date, completedInt]
+    );
+
+    return {
+      id,
+      habitId,
+      date,
+      completed,
+    };
   },
+
+  async getHabitEntries(habitId: string): Promise<HabitEntry[]> {
+    const rows = await runQuery<any>(
+      'SELECT * FROM habit_entries WHERE habitId = ?',
+      [habitId]
+    );
+
+    return rows.map(row => ({
+      ...row,
+      completed: row.completed === 1
+    }));
+  }
 };

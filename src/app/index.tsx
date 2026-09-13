@@ -13,5 +13,6 @@ export default function Index() {
     return <Redirect href="/(tabs)/today" />;
   }
 
-  return <Redirect href="/(auth)/login" />;
+  // Fallback if state hasn't updated yet, but store now defaults to test user
+  return <Redirect href="/(tabs)/today" />;
 }
