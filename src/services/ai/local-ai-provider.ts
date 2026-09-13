@@ -75,10 +75,14 @@ export class LocalAIProvider implements AIProvider {
   }
 
   private async executeInference(prompt: string) {
+    console.log('[LocalAIProvider] executeInference with status:', this.status);
     if (this.status !== LocalModelStatus.LOADED) {
+      console.error('[LocalAIProvider] Model not loaded. Current status:', this.status);
       throw new Error('Local model not loaded.');
     }
-    return this.adapter.infer(prompt);
+    const result = await this.adapter.infer(prompt);
+    console.log('[LocalAIProvider] Inference result received');
+    return result;
   }
 
   async chat(message: string, context?: any): Promise<string> {

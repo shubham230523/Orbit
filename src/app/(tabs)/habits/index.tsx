@@ -24,9 +24,11 @@ export default function HabitsScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
   const [newHabitTitle, setNewHabitTitle] = useState('');
 
+  const today = new Date().toISOString().split('T')[0];
+
   const { data: habits, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['habits'],
-    queryFn: habitService.getHabits,
+    queryKey: ['habits', today],
+    queryFn: () => habitService.getHabitsWithStatus(today),
   });
 
   const createHabitMutation = useMutation({
@@ -40,7 +42,7 @@ export default function HabitsScreen() {
 
   const logHabitMutation = useMutation({
     mutationFn: ({ habitId, completed }: { habitId: string; completed: boolean }) =>
-      habitService.logHabit(habitId, toISO(new Date()), completed),
+      habitService.logHabit(habitId, today, completed),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
     },
@@ -73,7 +75,7 @@ export default function HabitsScreen() {
         renderItem={({ item }) => (
           <Card style={styles.habitCard}>
             <Checkbox
-              checked={false} // Would need to check today's log status
+              checked={item.completed}
               onValueChange={(val) => logHabitMutation.mutate({ habitId: item.id, completed: val })}
               label={item.title}
             />

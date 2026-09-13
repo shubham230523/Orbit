@@ -114,14 +114,16 @@ export const goalService = {
   },
 
   async generateRoadmap(goalId: string): Promise<{ roadmap: Roadmap; milestones: Milestone[] }> {
+    console.log('[GoalService] generateRoadmap started for:', goalId);
     const provider = AIProviderFactory.getProvider();
 
-    // We only support local-first now, but keeping the check for consistency if needed.
-    // If it's REMOTE, it would still fail because we don't have a backend.
-    // So we'll force use local or throw error if not available.
-
+    console.log('[GoalService] Fetching goal data...');
     const goal = await this.getGoal(goalId);
+    console.log('[GoalService] Goal found:', goal.title);
+
+    console.log('[GoalService] Calling AI provider to generate roadmap...');
     const aiResponse = await provider.generateRoadmap(goal.title, goal.description);
+    console.log('[GoalService] AI response received. Milestones count:', aiResponse.milestones.length);
 
     // Save locally generated roadmap to SQLite
     const roadmapId = uuidv4();
@@ -134,12 +136,14 @@ export const goalService = {
       createdAt: now,
     };
 
+    console.log('[GoalService] Saving roadmap to database...');
     await runExecute(
       'INSERT INTO roadmaps (id, goalId, title, createdAt) VALUES (?, ?, ?, ?)',
       [roadmap.id, roadmap.goalId, roadmap.title, roadmap.createdAt]
     );
 
     const milestones: Milestone[] = [];
+    console.log('[GoalService] Saving milestones...');
     for (const m of aiResponse.milestones) {
       const milestone: Milestone = {
         id: uuidv4(),
@@ -158,6 +162,7 @@ export const goalService = {
       milestones.push(milestone);
     }
 
+    console.log('[GoalService] Roadmap generation complete!');
     return { roadmap, milestones };
   },
 };

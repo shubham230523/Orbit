@@ -18,11 +18,40 @@ export class AndroidAIAdapter implements PlatformAIAdapter {
   }
 
   async infer(prompt: string): Promise<InferenceResult> {
+    console.log('[AndroidAIAdapter] Inference requested');
     if (Platform.OS !== 'android') throw new Error('Android only');
+
     if (!LlamaModule) {
-      console.warn('LlamaModule is null. Returning mock response.');
-      return { text: JSON.stringify({ objective: 'Mocked objective from local-first Orbit', milestones: [] }) };
+      console.warn('[AndroidAIAdapter] LlamaModule not found. Returning structured mock data.');
+
+      let mockData = {};
+      if (prompt.includes('roadmap')) {
+        mockData = {
+          milestones: [
+            { title: 'Foundations', description: 'Setup environment and basic concepts', estimatedWeeks: 1 },
+            { title: 'Intermediate Skills', description: 'Deep dive into advanced topics', estimatedWeeks: 2 },
+            { title: 'Project Implementation', description: 'Build and deploy a real-world project', estimatedWeeks: 1 }
+          ]
+        };
+      } else if (prompt.includes('schedule')) {
+        mockData = { schedule: [] };
+      } else {
+        mockData = {
+          objective: 'Learn and Master the topic',
+          constraints: ['Time', 'Resources'],
+          measurableOutcomes: ['Certificate', 'Completed Project'],
+          estimatedDurationWeeks: 4,
+          category: 'Skill Development'
+        };
+      }
+
+      return {
+        text: JSON.stringify(mockData),
+        tokensPerSecond: 0
+      };
     }
+
+    console.log('[AndroidAIAdapter] Calling native LlamaModule.infer...');
     return LlamaModule.infer(prompt);
   }
 

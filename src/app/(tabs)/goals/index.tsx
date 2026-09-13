@@ -20,8 +20,10 @@ import { toISO } from '@/utils/date';
 import { useAIStore } from '@/store/use-ai-store';
 import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
 import { AIProviderType } from '@/services/ai/types';
+import { useRouter } from 'expo-router';
 
 export default function GoalsScreen() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [isModalVisible, setModalVisible] = useState(false);
@@ -97,7 +99,12 @@ export default function GoalsScreen() {
         data={goals}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <GoalCard goal={item} progress={0} style={styles.card} />
+          <GoalCard
+            goal={item}
+            progress={0}
+            onPress={() => router.push(`/goals/${item.id}/roadmap`)}
+            style={styles.card}
+          />
         )}
         ListEmptyComponent={
           <EmptyState

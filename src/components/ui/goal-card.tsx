@@ -1,5 +1,4 @@
-import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ViewStyle } from 'react-native';
 import { Goal } from '@/types/domain';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing, Typography } from '@/constants/theme';
@@ -10,22 +9,31 @@ export interface GoalCardProps {
   goal: Goal;
   progress: number; // 0 to 1
   onPress?: () => void;
+  style?: ViewStyle;
 }
 
-export const GoalCard = ({ goal, progress, onPress }: GoalCardProps) => {
+export const GoalCard = ({ goal, progress, onPress, style }: GoalCardProps) => {
   const colors = useTheme();
 
   return (
-    <Card elevated style={[styles.card, { borderColor: colors.backgroundSelected, borderWidth: 1 }]}>
-      <Pressable onPress={onPress} android_ripple={{ color: colors.backgroundSelected }}>
+    <Card
+      elevated
+      style={[
+        { borderColor: colors.backgroundSelected, borderWidth: 1, padding: 0 },
+        style,
+      ]}
+    >
+      <Pressable
+        onPress={onPress}
+        android_ripple={{ color: colors.backgroundSelected }}
+        style={styles.pressable}
+      >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
             {goal.title}
           </Text>
           <View style={styles.percentageContainer}>
-            <Text style={styles.percentage}>
-              {Math.round(progress * 100)}%
-            </Text>
+            <Text style={styles.percentage}>{Math.round(progress * 100)}%</Text>
           </View>
         </View>
 
@@ -53,7 +61,7 @@ export const GoalCard = ({ goal, progress, onPress }: GoalCardProps) => {
 };
 
 const styles = StyleSheet.create({
-  card: {
+  pressable: {
     padding: Spacing.three,
   },
   header: {

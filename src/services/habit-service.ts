@@ -4,14 +4,20 @@ import { Habit, HabitEntry } from '@/types/domain';
 import { useAuthStore } from '@/store/use-auth-store';
 
 export const habitService = {
-  async getHabits(): Promise<Habit[]> {
+  async getHabitsWithStatus(date: string): Promise<(Habit & { completed: boolean })[]> {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return [];
 
-    return await runQuery<Habit>(
-      'SELECT * FROM habits WHERE userId = ? ORDER BY createdAt DESC',
-      [userId]
+    const rows = await runQuery<any>(
+      `SELECT h.*, (SELECT e.completed FROM habit_entries e WHERE e.habitId = h.id AND e.date = ?) as completed
+       FROM habits h WHERE h.userId = ? ORDER BY h.createdAt DESC`,
+      [date, userId]
     );
+
+    return rows.map(row => ({
+      ...row,
+      completed: row.completed === 1
+    }));
   },
 
   async createHabit(habit: Partial<Habit>): Promise<Habit> {

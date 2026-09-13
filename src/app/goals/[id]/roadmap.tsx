@@ -20,28 +20,43 @@ export default function GoalRoadmapScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // ... queries
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['roadmap', id],
+    queryFn: () => goalService.getRoadmap(id),
+    retry: false,
+  });
 
   const generateMutation = useMutation({
     mutationFn: async () => {
+      console.log('[RoadmapScreen] Starting generation for goal:', id);
       return goalService.generateRoadmap(id);
     },
     onSuccess: () => {
+      console.log('[RoadmapScreen] Generation successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['roadmap', id] });
     },
+    onError: (err) => {
+      console.error('[RoadmapScreen] Generation failed:', err);
+    }
   });
 
   if (isLoading) return <LoadingState message="Fetching roadmap..." />;
 
   if (isError) {
     // If not found, show option to generate
-    if ((error as any).response?.status === 404) {
+    const isNotFound = error?.message === 'Roadmap not found' || (error as any).response?.status === 404;
+
+    if (isNotFound) {
       return (
         <Screen>
+          <View style={styles.header}>
+            <ThemedText type="title">Roadmap</ThemedText>
+          </View>
           <EmptyState
             title="No roadmap yet"
             description="Let AI create a step-by-step plan for you."
             icon={<Sparkles size={48} color="gold" />}
+            style={{ flex: 1 }}
           />
           <Button
             title="Generate Roadmap"
@@ -52,7 +67,7 @@ export default function GoalRoadmapScreen() {
         </Screen>
       );
     }
-    return <ErrorState message={error.message} onRetry={refetch} />;
+    return <ErrorState message={error?.message || 'Error'} onRetry={refetch} />;
   }
 
   return (
