@@ -3,9 +3,12 @@ import { runQuery, runExecute } from '@/db/client';
 import { Task } from '@/types/domain';
 
 export const taskService = {
-  async getTasks(): Promise<Task[]> {
-    return await runQuery<Task>(
-      'SELECT * FROM tasks ORDER BY createdAt DESC'
+  async getTasks(): Promise<(Task & { goalTitle?: string })[]> {
+    return await runQuery<Task & { goalTitle?: string }>(
+      `SELECT t.*, g.title as goalTitle
+       FROM tasks t
+       LEFT JOIN goals g ON t.goalId = g.id
+       ORDER BY t.createdAt DESC`
     );
   },
 

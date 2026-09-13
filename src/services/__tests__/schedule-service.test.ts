@@ -1,65 +1,93 @@
 import { scheduleService } from '../schedule-service';
-import { apiClient } from '../api-client';
-import { AIProviderFactory } from '../ai/ai-provider-factory';
-import { AIProviderType } from '../ai/types';
+import { runQuery, runExecute } from '@/db/client';
+import { useAuthStore } from '@/store/use-auth-store';
 import { taskService } from '../task-service';
+import { AIProviderFactory } from '../ai/ai-provider-factory';
+import { v4 as uuidv4 } from 'uuid';
 
-jest.mock('../api-client', () => ({
-  apiClient: {
-    get: jest.fn(),
-    post: jest.fn(),
+jest.mock('@/db/client', () => ({
+  runQuery: jest.fn(),
+  runExecute: jest.fn(),
+}));
+
+jest.mock('@/store/use-auth-store', () => ({
+  useAuthStore: {
+    getState: jest.fn(),
   },
 }));
 
-jest.mock('../ai/ai-provider-factory');
-jest.mock('../task-service');
+jest.mock('../task-service', () => ({
+  taskService: {
+    getTasks: jest.fn(),
+  },
+}));
+
+jest.mock('../ai/ai-provider-factory', () => ({
+  AIProviderFactory: {
+    getProvider: jest.fn(),
+  },
+}));
+
+jest.mock('uuid', () => ({
+  v4: jest.fn(),
+}));
 
 describe('ScheduleService', () => {
+  const mockUser = { id: 'user-1' };
+  const mockBlock = {
+    id: 'block-1',
+    userId: 'user-1',
+    taskId: 'task-1',
+    title: 'Work on Orbit',
+    startTime: '2023-01-01T09:00:00Z',
+    endTime: '2023-01-01T10:00:00Z',
+    type: 'TASK',
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (useAuthStore.getState as jest.Mock).mockReturnValue({ user: mockUser });
   });
 
-  it('gets schedule', async () => {
-    const mockBlocks = [{ id: '1', title: 'Task' }];
-    (apiClient.get as jest.Mock).mockResolvedValueOnce({ data: mockBlocks });
-    const result = await scheduleService.getSchedule();
-    expect(result).toEqual(mockBlocks);
-    expect(apiClient.get).toHaveBeenCalledWith('/schedule');
+  it('gets schedule blocks for the user', async () => {
+    (runQuery as jest.Mock).mockResolvedValueOnce([mockBlock]);
+
+    const schedule = await scheduleService.getSchedule();
+
+    expect(schedule).toEqual([mockBlock]);
+    expect(runQuery).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT * FROM schedule_blocks'),
+      [mockUser.id]
+    );
   });
 
-  describe('generateSchedule', () => {
-    it('uses remote generation when provider is REMOTE', async () => {
-      const mockBlocks = [{ id: '1', title: 'Remote Task' }];
-      const mockProvider = {
-        getType: jest.fn().mockReturnValue(AIProviderType.REMOTE),
-      };
-      (AIProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
-      (apiClient.post as jest.Mock).mockResolvedValueOnce({ data: mockBlocks });
+  it('generates a schedule using AI', async () => {
+    const mockTasks = [{ id: 'task-1', title: 'Task 1' }];
+    const mockAIResponse = {
+      schedule: [
+        { taskId: 'task-1', startTime: '09:00', endTime: '10:00' }
+      ]
+    };
+    const mockProvider = {
+      generateSchedule: jest.fn().mockResolvedValue(mockAIResponse),
+    };
 
-      const result = await scheduleService.generateSchedule();
+    (taskService.getTasks as jest.Mock).mockResolvedValue(mockTasks);
+    (AIProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
+    (uuidv4 as jest.Mock).mockReturnValue('new-block-uuid');
 
-      expect(result).toEqual(mockBlocks);
-      expect(apiClient.post).toHaveBeenCalledWith('/schedule/generate');
-    });
+    const result = await scheduleService.generateSchedule();
 
-    it('uses local generation when provider is LOCAL', async () => {
-      const mockTasks = [{ id: 't1', title: 'Local Task' }];
-      const aiResponse = { schedule: [{ taskId: 't1', startTime: '...', endTime: '...', reason: '...' }] };
-      const mockBlocks = [{ id: 'b1', title: 'Local Task' }];
-
-      const mockProvider = {
-        getType: jest.fn().mockReturnValue(AIProviderType.LOCAL),
-        generateSchedule: jest.fn().mockResolvedValue(aiResponse),
-      };
-      (AIProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
-      (taskService.getTasks as jest.Mock).mockResolvedValueOnce(mockTasks);
-      (apiClient.post as jest.Mock).mockResolvedValueOnce({ data: mockBlocks });
-
-      const result = await scheduleService.generateSchedule();
-
-      expect(result).toEqual(mockBlocks);
-      expect(mockProvider.generateSchedule).toHaveBeenCalledWith(mockTasks, '9 AM to 5 PM');
-      expect(apiClient.post).toHaveBeenCalledWith('/schedule/save', aiResponse);
-    });
+    expect(result).toHaveLength(1);
+    expect(result[0].taskId).toBe('task-1');
+    expect(mockProvider.generateSchedule).toHaveBeenCalled();
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM schedule_blocks'),
+      [mockUser.id]
+    );
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO schedule_blocks'),
+      expect.arrayContaining(['new-block-uuid', 'task-1', '09:00', '10:00'])
+    );
   });
 });

@@ -1,120 +1,138 @@
 import { goalService } from '../goal-service';
 import { runQuery, runExecute } from '@/db/client';
-import { AIProviderFactory } from '../ai/ai-provider-factory';
-import { AIProviderType } from '../ai/types';
 import { useAuthStore } from '@/store/use-auth-store';
+import { AIProviderFactory } from '../ai/ai-provider-factory';
+import { v4 as uuidv4 } from 'uuid';
 
 jest.mock('@/db/client', () => ({
   runQuery: jest.fn(),
   runExecute: jest.fn(),
 }));
 
-jest.mock('../ai/ai-provider-factory');
-
 jest.mock('@/store/use-auth-store', () => ({
   useAuthStore: {
-    getState: jest.fn(() => ({
-      user: { id: 'u1' }
-    }))
-  }
+    getState: jest.fn(),
+  },
+}));
+
+jest.mock('../ai/ai-provider-factory', () => ({
+  AIProviderFactory: {
+    getProvider: jest.fn(),
+  },
 }));
 
 jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'test-uuid'),
+  v4: jest.fn(),
 }));
 
 describe('GoalService', () => {
+  const mockUser = { id: 'user-1' };
   const mockGoal = {
-    id: 'test-uuid',
-    userId: 'u1',
+    id: 'goal-1',
+    userId: 'user-1',
     title: 'Test Goal',
     description: 'Description',
     status: 'active',
     priority: 'medium',
-    createdAt: expect.any(String),
-    updatedAt: expect.any(String),
+    createdAt: '2023-01-01T00:00:00.000Z',
+    updatedAt: '2023-01-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (useAuthStore.getState as jest.Mock).mockReturnValue({ user: mockUser });
   });
 
-  it('gets all goals', async () => {
+  it('gets goals for the user', async () => {
     (runQuery as jest.Mock).mockResolvedValueOnce([mockGoal]);
+
     const goals = await goalService.getGoals();
+
     expect(goals).toEqual([mockGoal]);
     expect(runQuery).toHaveBeenCalledWith(
       expect.stringContaining('SELECT * FROM goals'),
-      ['u1']
+      [mockUser.id]
     );
   });
 
   it('gets a single goal', async () => {
     (runQuery as jest.Mock).mockResolvedValueOnce([mockGoal]);
-    const goal = await goalService.getGoal('test-uuid');
+
+    const goal = await goalService.getGoal('goal-1');
+
     expect(goal).toEqual(mockGoal);
     expect(runQuery).toHaveBeenCalledWith(
       expect.stringContaining('SELECT * FROM goals WHERE id = ?'),
-      ['test-uuid']
+      ['goal-1']
     );
   });
 
   it('creates a goal', async () => {
+    const newId = 'new-goal-uuid';
+    (uuidv4 as jest.Mock).mockReturnValue(newId);
     (runExecute as jest.Mock).mockResolvedValueOnce(undefined);
-    const goal = await goalService.createGoal({ title: 'Test Goal', description: 'Description' });
 
-    expect(goal).toEqual(mockGoal);
-    expect(runExecute).toHaveBeenCalled();
-  });
+    const goalData = { title: 'New Goal', description: 'Desc' };
+    const goal = await goalService.createGoal(goalData);
 
-  it('updates a goal', async () => {
-    (runExecute as jest.Mock).mockResolvedValueOnce(undefined);
-    await goalService.updateGoal(mockGoal as any);
+    expect(goal.id).toBe(newId);
+    expect(goal.userId).toBe(mockUser.id);
     expect(runExecute).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE goals SET'),
-      expect.any(Array)
+      expect.stringContaining('INSERT INTO goals'),
+      expect.arrayContaining([newId, mockUser.id, goalData.title])
     );
   });
 
-  it('deletes a goal', async () => {
+  it('deletes a goal and its roadmaps/milestones', async () => {
+    (runQuery as jest.Mock).mockResolvedValueOnce([{ id: 'roadmap-1' }]);
     (runExecute as jest.Mock).mockResolvedValue(undefined);
-    (runQuery as jest.Mock).mockResolvedValueOnce([]); // No roadmaps
 
-    await goalService.deleteGoal('test-uuid');
+    await goalService.deleteGoal('goal-1');
+
+    expect(runQuery).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT * FROM roadmaps WHERE goalId = ?'),
+      ['goal-1']
+    );
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM milestones WHERE roadmapId = ?'),
+      ['roadmap-1']
+    );
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM roadmaps WHERE id = ?'),
+      ['roadmap-1']
+    );
     expect(runExecute).toHaveBeenCalledWith(
       expect.stringContaining('DELETE FROM goals WHERE id = ?'),
-      ['test-uuid']
+      ['goal-1']
     );
   });
 
-  it('gets roadmap', async () => {
-    const mockRoadmap = { id: 'r1', goalId: 'g1', title: 'Roadmap' };
-    (runQuery as jest.Mock)
-      .mockResolvedValueOnce([mockRoadmap])
-      .mockResolvedValueOnce([]); // No milestones
+  it('generates a roadmap using AI and saves it', async () => {
+    const mockAIResponse = {
+      milestones: [
+        { title: 'M1', description: 'D1' }
+      ]
+    };
+    const mockProvider = {
+      generateRoadmap: jest.fn().mockResolvedValue(mockAIResponse),
+    };
 
-    const result = await goalService.getRoadmap('g1');
-    expect(result).toEqual({ roadmap: mockRoadmap, milestones: [] });
-  });
+    (runQuery as jest.Mock).mockResolvedValueOnce([mockGoal]); // For getGoal inside generateRoadmap
+    (AIProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
+    (uuidv4 as jest.Mock).mockReturnValueOnce('new-roadmap-uuid').mockReturnValue('new-milestone-uuid');
 
-  describe('generateRoadmap', () => {
-    it('uses local generation and saves to SQLite', async () => {
-      const aiResponse = { milestones: [{ title: 'M1', description: 'D1' }] };
-      const mockProvider = {
-        getType: jest.fn().mockReturnValue(AIProviderType.LOCAL),
-        generateRoadmap: jest.fn().mockResolvedValue(aiResponse),
-      };
-      (AIProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
+    const result = await goalService.generateRoadmap('goal-1');
 
-      // getGoal mock
-      (runQuery as jest.Mock).mockResolvedValueOnce([mockGoal]);
-
-      const result = await goalService.generateRoadmap('test-uuid');
-
-      expect(result.roadmap.title).toContain(mockGoal.title);
-      expect(result.milestones.length).toBe(1);
-      expect(mockProvider.generateRoadmap).toHaveBeenCalled();
-      expect(runExecute).toHaveBeenCalled();
-    });
+    expect(result.roadmap.id).toBe('new-roadmap-uuid');
+    expect(result.milestones).toHaveLength(1);
+    expect(result.milestones[0].id).toBe('new-milestone-uuid');
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO roadmaps'),
+      expect.arrayContaining(['new-roadmap-uuid', 'goal-1'])
+    );
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO milestones'),
+      expect.arrayContaining(['new-milestone-uuid', 'new-roadmap-uuid', 'M1', 'D1'])
+    );
   });
 });

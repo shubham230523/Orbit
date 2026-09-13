@@ -9,9 +9,11 @@ export interface MilestoneCardProps {
   title: string;
   status: 'todo' | 'completed';
   dueDate?: string;
+  onAction?: () => void;
+  isActioned?: boolean;
 }
 
-export const MilestoneCard = ({ title, status, dueDate }: MilestoneCardProps) => {
+export const MilestoneCard = ({ title, status, dueDate, onAction, isActioned }: MilestoneCardProps) => {
   const colors = useTheme();
 
   return (
@@ -31,11 +33,27 @@ export const MilestoneCard = ({ title, status, dueDate }: MilestoneCardProps) =>
           variant={status === 'completed' ? 'success' : 'secondary'}
         />
       </View>
-      {dueDate && (
-        <Text style={[styles.meta, { color: colors.textSecondary }]}>
-          Due: {dueDate}
-        </Text>
-      )}
+
+      <View style={styles.footer}>
+        {dueDate ? (
+          <Text style={[styles.meta, { color: colors.textSecondary }]}>
+            Due: {dueDate}
+          </Text>
+        ) : <View />}
+
+        {!isActioned && status !== 'completed' && (
+          <Button
+            title="Convert to Task"
+            size="small"
+            variant="outline"
+            onPress={onAction}
+            style={styles.actionButton}
+          />
+        )}
+        {isActioned && (
+          <Badge label="Linked to Task" variant="primary" />
+        )}
+      </View>
     </Card>
   );
 };
@@ -58,8 +76,17 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     opacity: 0.6,
   },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.two,
+  },
   meta: {
     ...Typography.small,
-    marginTop: Spacing.one,
+  },
+  actionButton: {
+    height: 32,
+    paddingHorizontal: Spacing.two,
   },
 });

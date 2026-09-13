@@ -35,7 +35,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      "llama.rn"
     ],
     "experiments": {
       "typedRoutes": true,

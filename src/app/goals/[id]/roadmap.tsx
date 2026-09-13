@@ -14,11 +14,14 @@ import { Spacing } from '@/constants/theme';
 import { Sparkles } from 'lucide-react-native';
 
 import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
+import { taskService } from '@/services/task-service';
+import { useAuthStore } from '@/store/use-auth-store';
+import { toISO } from '@/utils/date';
 
 export default function GoalRoadmapScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['roadmap', id],
@@ -38,6 +41,24 @@ export default function GoalRoadmapScreen() {
     onError: (err) => {
       console.error('[RoadmapScreen] Generation failed:', err);
     }
+  });
+
+  const convertToTaskMutation = useMutation({
+    mutationFn: async (milestone: any) => {
+      console.log('[RoadmapScreen] Converting milestone to task:', milestone.title);
+      return taskService.createTask({
+        title: milestone.title,
+        description: milestone.description,
+        goalId: id,
+        priority: 'medium',
+        status: 'todo',
+      });
+    },
+    onSuccess: () => {
+      console.log('[RoadmapScreen] Task created successfully');
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // We could also mark the milestone as "actioned" in the DB if we had that field
+    },
   });
 
   if (isLoading) return <LoadingState message="Fetching roadmap..." />;
@@ -84,6 +105,7 @@ export default function GoalRoadmapScreen() {
             title={item.title}
             status={item.status}
             dueDate={item.dueDate || undefined}
+            onAction={() => convertToTaskMutation.mutate(item)}
           />
         )}
         contentContainerStyle={styles.listContent}

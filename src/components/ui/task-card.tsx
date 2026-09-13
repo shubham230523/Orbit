@@ -8,7 +8,7 @@ import { Card } from './card';
 import { Badge } from './badge';
 
 export interface TaskCardProps {
-  task: Task;
+  task: Task & { goalTitle?: string };
   onPress?: () => void;
   onToggleComplete?: () => void;
 }
@@ -40,6 +40,19 @@ export const TaskCard = ({ task, onPress, onToggleComplete }: TaskCardProps) => 
           </Text>
 
           <View style={styles.footer}>
+            <View style={styles.badgeRow}>
+              <Badge
+                label={task.priority}
+                variant={task.priority === 'high' ? 'error' : task.priority === 'medium' ? 'warning' : 'secondary'}
+              />
+              {task.goalTitle && (
+                <Badge
+                  label={task.goalTitle}
+                  variant="primary"
+                />
+              )}
+            </View>
+
             {task.dueDate && (
               <View style={styles.meta}>
                 <Clock size={14} color={colors.textSecondary} />
@@ -48,10 +61,6 @@ export const TaskCard = ({ task, onPress, onToggleComplete }: TaskCardProps) => 
                 </Text>
               </View>
             )}
-            <Badge
-              label={task.priority}
-              variant={task.priority === 'high' ? 'error' : task.priority === 'medium' ? 'warning' : 'secondary'}
-            />
           </View>
         </View>
       </Pressable>
@@ -83,6 +92,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: Spacing.half,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+    alignItems: 'center',
+    flexShrink: 1,
   },
   meta: {
     flexDirection: 'row',

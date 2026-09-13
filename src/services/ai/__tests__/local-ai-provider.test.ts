@@ -10,6 +10,7 @@ describe('LocalAIProvider', () => {
 
   beforeEach(() => {
     mockAdapter = {
+      isAvailable: jest.fn().mockReturnValue(true),
       loadModel: jest.fn().mockResolvedValue(undefined),
       infer: jest.fn().mockResolvedValue({ text: '{"milestones": []}', tokensPerSecond: 10 }),
       cancel: jest.fn().mockResolvedValue(undefined),
@@ -35,31 +36,59 @@ describe('LocalAIProvider', () => {
     expect(mockAdapter.loadModel).toHaveBeenCalledWith('/path/to/model');
   });
 
+  it('enters mock mode if adapter is not available', async () => {
+    mockAdapter.isAvailable.mockReturnValue(false);
+    await provider.initialize();
+
+    expect(provider.getStatus()).toBe(LocalModelStatus.LOADED);
+    expect(mockAdapter.loadModel).not.toHaveBeenCalled();
+
+    await provider.chat('Hi');
+    expect(mockAdapter.infer).toHaveBeenCalled();
+  });
+
   it('generates roadmap correctly', async () => {
+    mockAdapter.infer.mockResolvedValueOnce({
+      text: JSON.stringify({
+        milestones: [{ title: 'M1', description: 'D1', estimatedWeeks: 1 }]
+      }),
+      tokensPerSecond: 10
+    });
     await provider.initialize();
     const result = await provider.generateRoadmap('Test Goal');
-    expect(result.milestones).toEqual([]);
+    expect(result.milestones[0].title).toBe('M1');
+    expect(result.milestones[0].estimatedWeeks).toBe(1);
     expect(mockAdapter.infer).toHaveBeenCalled();
   });
 
   it('analyzes goal correctly', async () => {
     mockAdapter.infer.mockResolvedValueOnce({
-      text: JSON.stringify({ objective: 'Obj', constraints: [], measurableOutcomes: [], estimatedDurationWeeks: 1, category: 'Work' }),
+      text: JSON.stringify({
+        objective: 'Obj',
+        constraints: ['C1'],
+        measurableOutcomes: ['O1'],
+        estimatedDurationWeeks: 4,
+        category: 'Work'
+      }),
       tokensPerSecond: 10
     });
     await provider.initialize();
     const result = await provider.analyzeGoal('Test Goal');
     expect(result.objective).toBe('Obj');
+    expect(result.estimatedDurationWeeks).toBe(4);
   });
 
   it('generates schedule correctly', async () => {
     mockAdapter.infer.mockResolvedValueOnce({
-      text: JSON.stringify({ schedule: [] }),
+      text: JSON.stringify({
+        schedule: [{ taskId: '1', startTime: '9:00', endTime: '10:00', reason: 'Focus' }]
+      }),
       tokensPerSecond: 10
     });
     await provider.initialize();
     const result = await provider.generateSchedule([], '9-5');
-    expect(result.schedule).toEqual([]);
+    expect(result.schedule[0].taskId).toBe('1');
+    expect(result.schedule[0].reason).toBe('Focus');
   });
 
   it('chats correctly', async () => {

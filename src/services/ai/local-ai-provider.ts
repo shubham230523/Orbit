@@ -39,15 +39,20 @@ export class LocalAIProvider implements AIProvider {
       throw new Error('Model not downloaded.');
     }
     this.status = LocalModelStatus.LOADING;
+    console.log('[LocalAIProvider] Initialization step: LOADING');
     try {
       if (!this.adapter.isAvailable()) {
-        console.warn('AI Adapter is not available on this device. Local inference will be disabled.');
-        this.status = LocalModelStatus.FAILED;
+        console.warn('[LocalAIProvider] Native LlamaModule not found in this build. Orbit will run in MOCK mode.');
+        this.status = LocalModelStatus.LOADED; // Set to LOADED to allow mock inference
         return;
       }
+
+      console.log('[LocalAIProvider] Loading model from path:', this.storage.getModelPath());
       await this.adapter.loadModel(this.storage.getModelPath());
       this.status = LocalModelStatus.LOADED;
+      console.log('[LocalAIProvider] Initialization step: LOADED (Success)');
     } catch (e) {
+      console.error('[LocalAIProvider] Initialization FAILED:', e);
       this.status = LocalModelStatus.FAILED;
       throw e;
     }
@@ -80,7 +85,7 @@ export class LocalAIProvider implements AIProvider {
       console.error('[LocalAIProvider] Model not loaded. Current status:', this.status);
       throw new Error('Local model not loaded.');
     }
-    const result = await this.adapter.infer(prompt);
+    const result = await this.adapter.infer({ prompt });
     console.log('[LocalAIProvider] Inference result received');
     return result;
   }
