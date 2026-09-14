@@ -22,6 +22,7 @@ import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
 import { AIProviderType } from '@/services/ai/types';
 import { useRouter } from 'expo-router';
 import { DatePicker } from '@/components/ui/date-picker';
+import { getRandomCatchyMessage } from '@/utils/ai-messages';
 
 export default function GoalsScreen() {
   const router = useRouter();
@@ -81,7 +82,10 @@ export default function GoalsScreen() {
       setIsAnalyzing(true);
       try {
         const provider = AIProviderFactory.getProvider();
-        const analysis = await provider.analyzeGoal(newGoalTitle);
+        const analysis = await provider.analyzeGoal(
+          newGoalTitle,
+          targetDate ? targetDate.toISOString().split('T')[0] : undefined
+        );
 
         createGoalMutation.mutate({
           ...baseGoal,
@@ -112,7 +116,9 @@ export default function GoalsScreen() {
     );
   };
 
-  if (isLoading) return <LoadingState />;
+  const loadingMsg = getRandomCatchyMessage();
+
+  if (isLoading) return <LoadingState message="Fetching goals..." />;
   if (isError) return <ErrorState message={error.message} onRetry={refetch} />;
 
   return (
@@ -164,13 +170,19 @@ export default function GoalsScreen() {
             label="Target Date (Optional)"
             value={targetDate || new Date()}
             onChange={setTargetDate}
+            disabled={isAnalyzing}
           />
           <Button
-            title={isAnalyzing ? 'Analyzing with AI...' : 'Create Goal'}
+            title={isAnalyzing ? "Analyzing..." : 'Create Goal'}
             onPress={handleCreateGoal}
             loading={createGoalMutation.isPending || isAnalyzing}
             disabled={!newGoalTitle.trim()}
           />
+          {isAnalyzing && (
+            <ThemedText type="small" style={{ textAlign: 'center', marginTop: Spacing.two }}>
+              {getRandomCatchyMessage()}
+            </ThemedText>
+          )}
         </View>
       </Modal>
     </Screen>

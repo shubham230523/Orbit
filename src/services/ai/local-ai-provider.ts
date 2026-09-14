@@ -9,6 +9,7 @@ import {
 import { PlatformAIAdapter } from './platform-ai-adapter';
 import { ModelStorage } from './model-storage';
 import { RoadmapSchema, GoalAnalysisSchema, SchedulerSchema, wrapInJsonInstruction, PROMPT_SCHEMAS } from './prompts';
+import { SYSTEM_RULES } from './system-rules';
 
 export class LocalAIProvider implements AIProvider {
   private status: LocalModelStatus = LocalModelStatus.NOT_INSTALLED;
@@ -65,8 +66,10 @@ export class LocalAIProvider implements AIProvider {
     return RoadmapSchema.parse(JSON.parse(this.cleanJsonResponse(result.text)));
   }
 
-  async analyzeGoal(goalTitle: string): Promise<GoalAnalysisAIResponse> {
-    const rawPrompt = `Analyze the goal: "${goalTitle}". Extract objective, constraints, measurable outcomes, and category.`;
+  async analyzeGoal(goalTitle: string, targetDate?: string): Promise<GoalAnalysisAIResponse> {
+    const today = new Date().toISOString().split('T')[0];
+    const dateContext = targetDate ? `The user wants to achieve this by ${targetDate}. Today is ${today}.` : `Today is ${today}.`;
+    const rawPrompt = `Analyze the goal: "${goalTitle}". ${dateContext} Extract objective, constraints, measurable outcomes, and category.`;
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.GOAL_ANALYSIS);
     const result = await this.executeInference(prompt);
     const cleaned = this.cleanJsonResponse(result.text);
@@ -95,13 +98,13 @@ export class LocalAIProvider implements AIProvider {
     return cleaned;
   }
 
-  private async executeInference(prompt: string) {
+  private async executeInference(prompt: string, systemPrompt: string = SYSTEM_RULES) {
     console.log('[LocalAIProvider] executeInference with status:', this.status);
     if (this.status !== LocalModelStatus.LOADED) {
       console.error('[LocalAIProvider] Model not loaded. Current status:', this.status);
       throw new Error('Local model not loaded.');
     }
-    const result = await this.adapter.infer({ prompt });
+    const result = await this.adapter.infer({ prompt, systemPrompt });
     console.log('[LocalAIProvider] Inference result received');
     return result;
   }

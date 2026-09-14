@@ -14,9 +14,10 @@ export interface DatePickerProps {
   label?: string;
   minimumDate?: Date;
   maximumDate?: Date;
+  disabled?: boolean;
 }
 
-export const DatePicker = ({ value, onChange, label, minimumDate, maximumDate }: DatePickerProps) => {
+export const DatePicker = ({ value, onChange, label, minimumDate, maximumDate, disabled = false }: DatePickerProps) => {
   const colors = useTheme();
   const [show, setShow] = useState(false);
 
@@ -45,10 +46,12 @@ export const DatePicker = ({ value, onChange, label, minimumDate, maximumDate }:
     <View style={styles.container}>
       {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
       <Pressable
-        onPress={() => setShow(true)}
+        onPress={() => !disabled && setShow(true)}
+        disabled={disabled}
         style={[
           styles.pressable,
           { backgroundColor: colors.backgroundElement, borderColor: 'transparent' },
+          disabled && styles.disabled,
         ]}
       >
         <Text style={[styles.value, { color: colors.text }]}>{formatDate(value)}</Text>
@@ -92,5 +95,8 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     marginTop: Spacing.two,
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });

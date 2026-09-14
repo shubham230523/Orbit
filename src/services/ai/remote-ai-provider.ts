@@ -24,9 +24,10 @@ export class RemoteAIProvider implements AIProvider {
     throw new Error('RemoteAIProvider delegates high-level tasks to backend service.');
   }
 
-  async analyzeGoal(goalTitle: string): Promise<GoalAnalysisAIResponse> {
+  async analyzeGoal(goalTitle: string, targetDate?: string): Promise<GoalAnalysisAIResponse> {
     const response = await apiClient.post<GoalAnalysisAIResponse>('/ai/analyze-goal', {
       title: goalTitle,
+      targetDate,
     });
     return response.data;
   }

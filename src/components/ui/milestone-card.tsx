@@ -12,9 +12,10 @@ export interface MilestoneCardProps {
   dueDate?: string;
   onAction?: () => void;
   isActioned?: boolean;
+  loading?: boolean;
 }
 
-export const MilestoneCard = ({ title, status, dueDate, onAction, isActioned }: MilestoneCardProps) => {
+export const MilestoneCard = ({ title, status, dueDate, onAction, isActioned, loading }: MilestoneCardProps) => {
   const colors = useTheme();
 
   return (
@@ -48,6 +49,8 @@ export const MilestoneCard = ({ title, status, dueDate, onAction, isActioned }: 
             size="small"
             variant="outline"
             onPress={onAction}
+            loading={loading}
+            disabled={loading}
             style={styles.actionButton}
           />
         )}

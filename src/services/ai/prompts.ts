@@ -12,9 +12,13 @@ export const RoadmapSchema = z.object({
 
 export const GoalAnalysisSchema = z.object({
   objective: z.string(),
-  constraints: z.array(z.string()),
-  measurableOutcomes: z.array(z.string()),
-  estimatedDurationWeeks: z.number(),
+  constraints: z.preprocess((val) => (typeof val === 'string' ? [val] : val), z.array(z.string())),
+  measurableOutcomes: z.preprocess((val) => (typeof val === 'string' ? [val] : val), z.array(z.string())),
+  estimatedDurationWeeks: z.preprocess((val) => {
+    if (typeof val === 'string') return parseInt(val, 10);
+    if (typeof val === 'object' && val !== null && 'value' in val) return (val as any).value;
+    return val;
+  }, z.number()),
   category: z.string(),
 });
 
@@ -31,7 +35,7 @@ export const SchedulerSchema = z.object({
 
 export const PROMPT_SCHEMAS = {
   ROADMAP: '{"milestones": [{"title": "Milestone Title", "description": "Short description", "estimatedWeeks": 1}]}',
-  GOAL_ANALYSIS: '{"objective": "Specific goal objective", "constraints": ["Constraint 1", "Constraint 2"], "measurableOutcomes": ["Outcome 1", "Outcome 2"], "estimatedDurationWeeks": 4, "category": "Category Name"}',
+  GOAL_ANALYSIS: '{"objective": "Specific goal objective", "constraints": ["Constraint 1"], "measurableOutcomes": ["Outcome 1"], "estimatedDurationWeeks": 4, "category": "Category Name"}',
   SCHEDULER: '{"schedule": [{"taskId": "id", "startTime": "HH:MM", "endTime": "HH:MM", "reason": "Why this time"}]}',
 };
 

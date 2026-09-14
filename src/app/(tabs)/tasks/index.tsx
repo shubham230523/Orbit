@@ -117,16 +117,14 @@ export default function TasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: Spacing.four,
-  },
   listContent: {
-    paddingBottom: 100,
-    paddingHorizontal: Spacing.two,
+    paddingBottom: 120,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.two,
     flexGrow: 1,
   },
   card: {
-    marginBottom: Spacing.two,
+    // marginBottom: Spacing.two, // Handled by gap
   },
   fab: {
     position: 'absolute',

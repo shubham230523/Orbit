@@ -63,7 +63,7 @@ export interface AIProvider {
   getStatus(): LocalModelStatus | 'ONLINE';
   initialize(): Promise<void>;
   generateRoadmap(goalTitle: string, goalDescription?: string): Promise<RoadmapAIResponse>;
-  analyzeGoal(goalTitle: string): Promise<GoalAnalysisAIResponse>;
+  analyzeGoal(goalTitle: string, targetDate?: string): Promise<GoalAnalysisAIResponse>;
   generateSchedule(tasks: Task[], availability: string): Promise<SchedulerAIResponse>;
   chat(message: string, context?: any): Promise<string>;
   research(topic: string): Promise<any>;
