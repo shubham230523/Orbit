@@ -9,10 +9,11 @@ export interface GoalCardProps {
   goal: Goal;
   progress: number; // 0 to 1
   onPress?: () => void;
+  onLongPress?: () => void;
   style?: ViewStyle;
 }
 
-export const GoalCard = ({ goal, progress, onPress, style }: GoalCardProps) => {
+export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCardProps) => {
   const colors = useTheme();
 
   return (
@@ -25,6 +26,7 @@ export const GoalCard = ({ goal, progress, onPress, style }: GoalCardProps) => {
     >
       <Pressable
         onPress={onPress}
+        onLongPress={onLongPress}
         android_ripple={{ color: colors.backgroundSelected }}
         style={styles.pressable}
       >
@@ -47,11 +49,13 @@ export const GoalCard = ({ goal, progress, onPress, style }: GoalCardProps) => {
           <ProgressBar progress={progress} color="#208AEF" height={6} />
         </View>
 
-        <View style={styles.footer}>
-          <View style={styles.metaRow}>
-            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Target: {goal.targetDate || 'No date'}</Text>
+        {goal.targetDate && (
+          <View style={styles.footer}>
+            <View style={styles.metaRow}>
+              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Target: {goal.targetDate}</Text>
+            </View>
           </View>
-        </View>
+        )}
       </Pressable>
     </Card>
   );

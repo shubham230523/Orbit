@@ -29,6 +29,12 @@ export const SchedulerSchema = z.object({
   ),
 });
 
+export const PROMPT_SCHEMAS = {
+  ROADMAP: '{"milestones": [{"title": "Milestone Title", "description": "Short description", "estimatedWeeks": 1}]}',
+  GOAL_ANALYSIS: '{"objective": "Specific goal objective", "constraints": ["Constraint 1", "Constraint 2"], "measurableOutcomes": ["Outcome 1", "Outcome 2"], "estimatedDurationWeeks": 4, "category": "Category Name"}',
+  SCHEDULER: '{"schedule": [{"taskId": "id", "startTime": "HH:MM", "endTime": "HH:MM", "reason": "Why this time"}]}',
+};
+
 export function wrapInJsonInstruction(prompt: string, schema: string): string {
-  return `${prompt}\n\nReturn ONLY a valid JSON object matching this schema:\n${schema}\n\nDo not include any other text or explanation.`;
+  return `${prompt}\n\nIMPORTANT: You must output ONLY a valid JSON object. Do not include any conversation, markdown code blocks, or extra characters. Ensure all array fields are actual JSON arrays.\n\nRequired JSON Structure:\n${schema}`;
 }

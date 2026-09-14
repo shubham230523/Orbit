@@ -65,10 +65,6 @@ export default function HabitsScreen() {
 
   return (
     <Screen scrollable={false}>
-      <View style={styles.header}>
-        <ThemedText type="title">Habits</ThemedText>
-      </View>
-
       <FlatList
         data={habits}
         keyExtractor={(item) => item.id}

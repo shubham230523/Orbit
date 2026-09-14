@@ -65,6 +65,10 @@ describe('useAuthStore', () => {
 
     const state = useAuthStore.getState();
     expect(state.isLoading).toBe(false);
-    expect(state.user).toBeNull();
+    expect(state.user).toEqual({
+      id: 'test-user-id',
+      email: 'test@example.com',
+      name: 'Test User'
+    });
   });
 });

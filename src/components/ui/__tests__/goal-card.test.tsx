@@ -35,6 +35,6 @@ describe('GoalCard', () => {
     const minimalGoal = { ...mockGoal, description: undefined, targetDate: undefined };
     render(<GoalCard goal={minimalGoal} progress={0} />);
     expect(screen.queryByText('Test Description')).toBeNull();
-    expect(screen.getByText('Target: No date')).toBeTruthy();
+    expect(screen.queryByText('Target:')).toBeNull();
   });
 });

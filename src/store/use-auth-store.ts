@@ -23,7 +23,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (session) {
         set({ user: session.user, token: session.token, isLoading: false });
       } else {
-        set({ user: null, token: null, isLoading: false });
+        // Fallback to test user for auth bypass during development
+        set({
+          user: { id: 'test-user-id', email: 'test@example.com', name: 'Test User' },
+          token: 'test-token',
+          isLoading: false
+        });
       }
     } catch (e) {
       set({ user: null, token: null, isLoading: false });

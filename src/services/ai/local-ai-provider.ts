@@ -8,7 +8,7 @@ import {
 } from './types';
 import { PlatformAIAdapter } from './platform-ai-adapter';
 import { ModelStorage } from './model-storage';
-import { RoadmapSchema, GoalAnalysisSchema, SchedulerSchema, wrapInJsonInstruction } from './prompts';
+import { RoadmapSchema, GoalAnalysisSchema, SchedulerSchema, wrapInJsonInstruction, PROMPT_SCHEMAS } from './prompts';
 
 export class LocalAIProvider implements AIProvider {
   private status: LocalModelStatus = LocalModelStatus.NOT_INSTALLED;
@@ -60,23 +60,39 @@ export class LocalAIProvider implements AIProvider {
 
   async generateRoadmap(goalTitle: string, goalDescription?: string): Promise<RoadmapAIResponse> {
     const rawPrompt = `Create a step-by-step roadmap for: "${goalTitle}". Description: "${goalDescription || ''}". Break it down into 3-7 milestones.`;
-    const prompt = wrapInJsonInstruction(rawPrompt, JSON.stringify(RoadmapSchema.shape));
+    const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.ROADMAP);
     const result = await this.executeInference(prompt);
-    return RoadmapSchema.parse(JSON.parse(result.text));
+    return RoadmapSchema.parse(JSON.parse(this.cleanJsonResponse(result.text)));
   }
 
   async analyzeGoal(goalTitle: string): Promise<GoalAnalysisAIResponse> {
     const rawPrompt = `Analyze the goal: "${goalTitle}". Extract objective, constraints, measurable outcomes, and category.`;
-    const prompt = wrapInJsonInstruction(rawPrompt, JSON.stringify(GoalAnalysisSchema.shape));
+    const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.GOAL_ANALYSIS);
     const result = await this.executeInference(prompt);
-    return GoalAnalysisSchema.parse(JSON.parse(result.text));
+    const cleaned = this.cleanJsonResponse(result.text);
+    console.log('[LocalAIProvider] Cleaned Analysis Result:', cleaned);
+    return GoalAnalysisSchema.parse(JSON.parse(cleaned));
   }
 
   async generateSchedule(tasks: any[], availability: string): Promise<SchedulerAIResponse> {
     const rawPrompt = `Generate an optimal schedule for these tasks: ${JSON.stringify(tasks)}. My availability: "${availability}".`;
-    const prompt = wrapInJsonInstruction(rawPrompt, JSON.stringify(SchedulerSchema.shape));
+    const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     const result = await this.executeInference(prompt);
-    return SchedulerSchema.parse(JSON.parse(result.text));
+    return SchedulerSchema.parse(JSON.parse(this.cleanJsonResponse(result.text)));
+  }
+
+  private cleanJsonResponse(text: string): string {
+    // 1. Strip markdown code blocks
+    let cleaned = text.replace(/```json\n?|```/g, '').trim();
+
+    // 2. Find first '{' and last '}' to isolate the JSON object if model added chatter
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    }
+
+    return cleaned;
   }
 
   private async executeInference(prompt: string) {
@@ -98,7 +114,7 @@ export class LocalAIProvider implements AIProvider {
   async research(topic: string): Promise<any> {
     const prompt = `Research topic: ${topic}. Return JSON.`;
     const result = await this.executeInference(prompt);
-    return JSON.parse(result.text);
+    return JSON.parse(this.cleanJsonResponse(result.text));
   }
 
   cancel(): void {

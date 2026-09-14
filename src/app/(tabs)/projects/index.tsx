@@ -5,7 +5,7 @@ import { Screen } from '@/components/ui/screen';
 export default function ProjectsScreen() {
   return (
     <Screen>
-      <ThemedText type="title">Projects</ThemedText>
+      <ThemedText type="subtitle">Project management coming soon.</ThemedText>
     </Screen>
   );
 }

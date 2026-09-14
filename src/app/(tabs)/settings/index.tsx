@@ -51,10 +51,6 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <ThemedText type="title">Settings</ThemedText>
-      </View>
-
       <View style={styles.section}>
         <ThemedText type="subtitle">AI & Inference</ThemedText>
 

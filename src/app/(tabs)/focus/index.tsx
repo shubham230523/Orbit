@@ -13,8 +13,6 @@ export default function FocusScreen() {
 
   return (
     <Screen contentContainerStyle={styles.container}>
-      <ThemedText type="title" style={styles.title}>Focus Session</ThemedText>
-
       <View style={styles.timerContainer}>
         <ProgressRing
           progress={progress}

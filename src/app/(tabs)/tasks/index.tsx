@@ -64,10 +64,6 @@ export default function TasksScreen() {
 
   return (
     <Screen scrollable={false}>
-      <View style={styles.header}>
-        <ThemedText type="title">Tasks</ThemedText>
-      </View>
-
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react-native';
 import { goalService } from '@/services/goal-service';
@@ -21,6 +21,7 @@ import { useAIStore } from '@/store/use-ai-store';
 import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
 import { AIProviderType } from '@/services/ai/types';
 import { useRouter } from 'expo-router';
+import { DatePicker } from '@/components/ui/date-picker';
 
 export default function GoalsScreen() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function GoalsScreen() {
   const { user } = useAuthStore();
   const [isModalVisible, setModalVisible] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const { data: goals, isLoading, isError, error, refetch } = useQuery({
@@ -41,7 +43,20 @@ export default function GoalsScreen() {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       setModalVisible(false);
       setNewGoalTitle('');
+      setTargetDate(null);
       setIsAnalyzing(false);
+    },
+    onError: (err) => {
+      console.error('[GoalsScreen] createGoalMutation FAILED:', err);
+      setIsAnalyzing(false);
+      Alert.alert('Error', 'Failed to create goal: ' + err.message);
+    },
+  });
+
+  const deleteGoalMutation = useMutation({
+    mutationFn: goalService.deleteGoal,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
     },
   });
 
@@ -51,6 +66,17 @@ export default function GoalsScreen() {
     const { providerType, isModelDownloaded } = useAIStore.getState();
     const shouldAttemptAI = providerType === AIProviderType.REMOTE || (providerType === AIProviderType.LOCAL && isModelDownloaded);
 
+    const baseGoal: Partial<Goal> = {
+      id: generateId(),
+      userId: user.id,
+      title: newGoalTitle,
+      status: 'active',
+      priority: 'medium',
+      targetDate: targetDate ? targetDate.toISOString().split('T')[0] : undefined,
+      createdAt: toISO(new Date()),
+      updatedAt: toISO(new Date()),
+    };
+
     if (shouldAttemptAI) {
       setIsAnalyzing(true);
       try {
@@ -58,32 +84,32 @@ export default function GoalsScreen() {
         const analysis = await provider.analyzeGoal(newGoalTitle);
 
         createGoalMutation.mutate({
-          id: generateId(),
-          userId: user.id,
-          title: newGoalTitle,
+          ...baseGoal,
           description: analysis.objective,
-          status: 'active',
-          priority: 'medium',
-          createdAt: toISO(new Date()),
-          updatedAt: toISO(new Date()),
         });
-        return; // Success, mutation will handle closing
+        return;
       } catch (e) {
         console.warn('AI analysis failed, falling back to basic creation', e);
         setIsAnalyzing(false);
       }
     }
 
-    // Direct creation if AI is skipped or failed
-    createGoalMutation.mutate({
-      id: generateId(),
-      userId: user.id,
-      title: newGoalTitle,
-      status: 'active',
-      priority: 'medium',
-      createdAt: toISO(new Date()),
-      updatedAt: toISO(new Date()),
-    });
+    createGoalMutation.mutate(baseGoal);
+  };
+
+  const handleDeletePress = (goal: Goal) => {
+    Alert.alert(
+      'Delete Goal',
+      `Are you sure you want to delete "${goal.title}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteGoalMutation.mutate(goal.id),
+        },
+      ]
+    );
   };
 
   if (isLoading) return <LoadingState />;
@@ -91,10 +117,6 @@ export default function GoalsScreen() {
 
   return (
     <Screen scrollable={false}>
-      <View style={styles.header}>
-        <ThemedText type="title">Goals</ThemedText>
-      </View>
-
       <FlatList
         data={goals}
         keyExtractor={(item) => item.id}
@@ -103,6 +125,7 @@ export default function GoalsScreen() {
             goal={item}
             progress={0}
             onPress={() => router.push(`/goals/${item.id}/roadmap`)}
+            onLongPress={() => handleDeletePress(item)}
             style={styles.card}
           />
         )}
@@ -125,7 +148,7 @@ export default function GoalsScreen() {
 
       <Modal
         visible={isModalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={() => !isAnalyzing && setModalVisible(false)}
         title="Create New Goal"
       >
         <View style={styles.modalContent}>
@@ -134,7 +157,13 @@ export default function GoalsScreen() {
             placeholder="e.g. Learn React Native"
             value={newGoalTitle}
             onChangeText={setNewGoalTitle}
+            editable={!isAnalyzing}
             autoFocus
+          />
+          <DatePicker
+            label="Target Date (Optional)"
+            value={targetDate || new Date()}
+            onChange={setTargetDate}
           />
           <Button
             title={isAnalyzing ? 'Analyzing with AI...' : 'Create Goal'}
@@ -149,9 +178,6 @@ export default function GoalsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: Spacing.four,
-  },
   listContent: {
     paddingBottom: 100,
     flexGrow: 1,

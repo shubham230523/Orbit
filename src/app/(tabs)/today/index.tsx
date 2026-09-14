@@ -33,7 +33,6 @@ export default function TodayScreen() {
   return (
     <Screen scrollable={false}>
       <View style={styles.header}>
-        <ThemedText type="title">Today</ThemedText>
         <Button
           title="Plan Day"
           variant="outline"

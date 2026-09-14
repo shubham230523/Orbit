@@ -5,7 +5,7 @@ import { Screen } from '@/components/ui/screen';
 export default function CalendarScreen() {
   return (
     <Screen>
-      <ThemedText type="title">Calendar</ThemedText>
+      <ThemedText type="subtitle">Calendar integration coming soon.</ThemedText>
     </Screen>
   );
 }

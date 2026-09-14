@@ -5,7 +5,7 @@ import { Screen } from '@/components/ui/screen';
 export default function InsightsScreen() {
   return (
     <Screen>
-      <ThemedText type="title">Insights</ThemedText>
+      <ThemedText type="subtitle">Performance analysis coming soon.</ThemedText>
     </Screen>
   );
 }
