@@ -5,6 +5,7 @@ module.exports = {
     '<rootDir>/jest.setup.js',
   ],
   moduleNameMapper: {
+    '\\.(png|jpg|jpeg|gif|svg)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.css$': 'identity-obj-proxy',
   },
