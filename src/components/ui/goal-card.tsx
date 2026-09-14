@@ -16,6 +16,7 @@ export interface GoalCardProps {
 
 export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCardProps) => {
   const colors = useTheme();
+  const hasExtra = !!(goal.description || goal.targetDate);
 
   return (
     <Card
@@ -29,15 +30,15 @@ export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCa
         onPress={onPress}
         onLongPress={onLongPress}
         android_ripple={{ color: colors.backgroundSelected }}
-        style={styles.pressable}
+        style={[styles.pressable, !hasExtra && { paddingVertical: Spacing.three }]}
       >
         <View style={styles.contentRow}>
           <View style={styles.mainInfo}>
-            <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={3}>
               {goal.title}
             </Text>
             {goal.description && (
-              <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={1}>
+              <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
                 {goal.description}
               </Text>
             )}
@@ -49,6 +50,7 @@ export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCa
               size={48}
               strokeWidth={4}
               color={colors.primary}
+              trackColor={colors.backgroundSelected}
             />
             <View style={StyleSheet.absoluteFillObject}>
               <View style={styles.percentageWrapper}>
@@ -75,7 +77,8 @@ export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCa
 
 const styles = StyleSheet.create({
   pressable: {
-    padding: Spacing.five,
+    paddingVertical: Spacing.four,
+    paddingHorizontal: Spacing.four,
   },
   contentRow: {
     flexDirection: 'row',
@@ -85,18 +88,18 @@ const styles = StyleSheet.create({
   },
   mainInfo: {
     flex: 1,
-    gap: Spacing.one,
+    gap: 2,
   },
   title: {
     ...Typography.bodyBold,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 18,
+    lineHeight: 24,
   },
   description: {
     ...Typography.body,
     fontSize: 14,
     opacity: 0.5,
-    marginTop: 2,
+    marginTop: 0,
   },
   progressContainer: {
     width: 56,
@@ -117,8 +120,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-    marginTop: Spacing.four,
-    paddingTop: Spacing.three,
+    marginTop: Spacing.three,
+    paddingTop: Spacing.two,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0,0,0,0.05)',
   },

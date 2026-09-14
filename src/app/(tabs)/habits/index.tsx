@@ -122,7 +122,7 @@ export default function HabitsScreen() {
 const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.two,
     gap: Spacing.three,
     flexGrow: 1,
   },

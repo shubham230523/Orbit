@@ -119,7 +119,7 @@ export default function TasksScreen() {
 const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 120,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.two,
     gap: Spacing.three,
     flexGrow: 1,
   },

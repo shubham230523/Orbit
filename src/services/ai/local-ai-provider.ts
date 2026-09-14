@@ -78,10 +78,22 @@ export class LocalAIProvider implements AIProvider {
   }
 
   async generateSchedule(tasks: any[], availability: string): Promise<SchedulerAIResponse> {
+    console.log('[LocalAIProvider] generateSchedule called with', tasks.length, 'tasks');
     const rawPrompt = `Generate an optimal schedule for these tasks: ${JSON.stringify(tasks)}. My availability: "${availability}".`;
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
+    console.log('[LocalAIProvider] Inference prompt sent');
     const result = await this.executeInference(prompt);
-    return SchedulerSchema.parse(JSON.parse(this.cleanJsonResponse(result.text)));
+    console.log('[LocalAIProvider] Inference result raw text length:', result.text.length);
+    const cleaned = this.cleanJsonResponse(result.text);
+    console.log('[LocalAIProvider] Cleaned JSON:', cleaned);
+    try {
+      const parsed = SchedulerSchema.parse(JSON.parse(cleaned));
+      console.log('[LocalAIProvider] Parsed schedule length:', parsed.schedule.length);
+      return parsed;
+    } catch (e) {
+      console.error('[LocalAIProvider] Failed to parse AI response:', e);
+      throw e;
+    }
   }
 
   private cleanJsonResponse(text: string): string {

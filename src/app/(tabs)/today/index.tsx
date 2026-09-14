@@ -22,9 +22,13 @@ export default function TodayScreen() {
 
   const generateMutation = useMutation({
     mutationFn: scheduleService.generateSchedule,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[TodayScreen] generateSchedule SUCCESS, items:', data.length);
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
     },
+    onError: (err) => {
+      console.error('[TodayScreen] generateSchedule ERROR:', err);
+    }
   });
 
   if (isLoading) return <LoadingState />;
@@ -79,7 +83,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 40,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.two,
   },
   blockCard: {
     marginBottom: Spacing.two,

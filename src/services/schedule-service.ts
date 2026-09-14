@@ -17,16 +17,22 @@ export const scheduleService = {
   },
 
   async generateSchedule(): Promise<ScheduleBlock[]> {
+    console.log('[ScheduleService] generateSchedule started');
     const userId = useAuthStore.getState().user?.id;
     if (!userId) throw new Error('Not authenticated');
 
     const provider = AIProviderFactory.getProvider();
+    console.log('[ScheduleService] Using AI provider:', provider.getType());
+
     const tasks = await taskService.getTasks();
+    console.log('[ScheduleService] Found', tasks.length, 'tasks to schedule');
 
     // In local-first, we use the local provider's generation logic
     const aiResponse = await provider.generateSchedule(tasks, '9 AM to 5 PM');
+    console.log('[ScheduleService] AI response received. Schedule items:', aiResponse.schedule.length);
 
     // Clear existing schedule for today (simplified for this spike)
+    console.log('[ScheduleService] Clearing existing schedule for user:', userId);
     await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
 
     const blocks: ScheduleBlock[] = [];
@@ -48,6 +54,7 @@ export const scheduleService = {
       );
       blocks.push(block);
     }
+    console.log('[ScheduleService] Saved', blocks.length, 'new schedule blocks');
 
     return blocks;
   },

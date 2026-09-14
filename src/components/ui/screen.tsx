@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
   innerContent: {
     width: '100%',
     maxWidth: MaxContentWidth,
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.four,
   },
 });

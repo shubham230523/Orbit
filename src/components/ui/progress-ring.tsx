@@ -12,6 +12,7 @@ export interface ProgressRingProps {
   size?: number;
   strokeWidth?: number;
   color?: string;
+  trackColor?: string;
   style?: ViewStyle;
   showText?: boolean;
 }
@@ -21,6 +22,7 @@ export const ProgressRing = ({
   size = 60,
   strokeWidth = 6,
   color,
+  trackColor,
   style,
   showText = false,
 }: ProgressRingProps) => {
@@ -43,7 +45,7 @@ export const ProgressRing = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.backgroundElement}
+          stroke={trackColor || colors.backgroundSelected}
           strokeWidth={strokeWidth}
           fill="transparent"
         />

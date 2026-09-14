@@ -3,6 +3,8 @@ import { FlatList, StyleSheet, View, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react-native';
 import { goalService } from '@/services/goal-service';
+import { taskService } from '@/services/task-service';
+import { Goal } from '@/types/domain';
 import { Screen } from '@/components/ui/screen';
 import { ThemedText } from '@/components/themed-text';
 import { GoalCard } from '@/components/ui/goal-card';
@@ -33,10 +35,20 @@ export default function GoalsScreen() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const { data: goals, isLoading, isError, error, refetch } = useQuery({
+  const { data: goals, isLoading: isLoadingGoals, isError: isGoalsError, error: goalsError, refetch: refetchGoals } = useQuery({
     queryKey: ['goals'],
     queryFn: goalService.getGoals,
   });
+
+  const { data: tasks, isLoading: isLoadingTasks } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: taskService.getTasks,
+  });
+
+  const isLoading = isLoadingGoals || isLoadingTasks;
+  const isError = isGoalsError;
+  const error = goalsError;
+  const refetch = refetchGoals;
 
   const createGoalMutation = useMutation({
     mutationFn: goalService.createGoal,
@@ -126,15 +138,21 @@ export default function GoalsScreen() {
       <FlatList
         data={goals}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <GoalCard
-            goal={item}
-            progress={0}
-            onPress={() => router.push(`/goals/${item.id}/roadmap`)}
-            onLongPress={() => handleDeletePress(item)}
-            style={styles.card}
-          />
-        )}
+        renderItem={({ item }) => {
+          const goalTasks = tasks?.filter(t => t.goalId === item.id) || [];
+          const completedTasks = goalTasks.filter(t => t.status === 'completed').length;
+          const progress = goalTasks.length > 0 ? completedTasks / goalTasks.length : 0;
+
+          return (
+            <GoalCard
+              goal={item}
+              progress={progress}
+              onPress={() => router.push(`/goals/${item.id}/roadmap`)}
+              onLongPress={() => handleDeletePress(item)}
+              style={styles.card}
+            />
+          );
+        }}
         ListEmptyComponent={
           <EmptyState
             title="No goals yet"
@@ -192,7 +210,7 @@ export default function GoalsScreen() {
 const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.two,
     flexGrow: 1,
   },
   card: {
