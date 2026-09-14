@@ -1,7 +1,7 @@
 import { ExpoModelDownloader } from '../model-downloader';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
-jest.mock('expo-file-system', () => ({
+jest.mock('expo-file-system/legacy', () => ({
   createDownloadResumable: jest.fn(),
   moveAsync: jest.fn(),
 }));
