@@ -120,12 +120,10 @@ export default function HabitsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: Spacing.four,
-  },
   listContent: {
     paddingBottom: 100,
-    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.three,
     flexGrow: 1,
   },
   habitCard: {

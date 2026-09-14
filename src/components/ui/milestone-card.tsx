@@ -64,7 +64,7 @@ export const MilestoneCard = ({ title, status, dueDate, onAction, isActioned, lo
 
 const styles = StyleSheet.create({
   card: {
-    padding: Spacing.two,
+    padding: Spacing.four,
   },
   header: {
     flexDirection: 'row',

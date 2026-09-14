@@ -192,6 +192,7 @@ export default function GoalsScreen() {
 const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
+    paddingHorizontal: Spacing.four,
     flexGrow: 1,
   },
   card: {

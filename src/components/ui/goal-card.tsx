@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View, Pressable, ViewStyle } from 'react-native';
 import { Goal } from '@/types/domain';
 import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing, Typography } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { Card } from './card';
-import { ProgressBar } from './progress-bar';
+import { ProgressRing } from './progress-ring';
+import { Calendar } from 'lucide-react-native';
 
 export interface GoalCardProps {
   goal: Goal;
@@ -20,7 +21,7 @@ export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCa
     <Card
       elevated
       style={[
-        { borderColor: colors.backgroundSelected, borderWidth: 1, padding: 0 },
+        { padding: 0, overflow: 'hidden', borderColor: colors.backgroundSelected, borderWidth: 1 },
         style,
       ]}
     >
@@ -30,30 +31,41 @@ export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCa
         android_ripple={{ color: colors.backgroundSelected }}
         style={styles.pressable}
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-            {goal.title}
-          </Text>
-          <View style={styles.percentageContainer}>
-            <Text style={styles.percentage}>{Math.round(progress * 100)}%</Text>
+        <View style={styles.contentRow}>
+          <View style={styles.mainInfo}>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+              {goal.title}
+            </Text>
+            {goal.description && (
+              <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={1}>
+                {goal.description}
+              </Text>
+            )}
           </View>
-        </View>
 
-        {goal.description && (
-          <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-            {goal.description}
-          </Text>
-        )}
-
-        <View style={styles.progressWrapper}>
-          <ProgressBar progress={progress} color="#208AEF" height={6} />
+          <View style={styles.progressContainer}>
+            <ProgressRing
+              progress={progress}
+              size={48}
+              strokeWidth={4}
+              color={colors.primary}
+            />
+            <View style={StyleSheet.absoluteFillObject}>
+              <View style={styles.percentageWrapper}>
+                <Text style={[styles.percentageText, { color: colors.text }]}>
+                  {Math.round(progress * 100)}%
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         {goal.targetDate && (
           <View style={styles.footer}>
-            <View style={styles.metaRow}>
-              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Target: {goal.targetDate}</Text>
-            </View>
+            <Calendar size={12} color={colors.textSecondary} />
+            <Text style={[styles.targetDate, { color: colors.textSecondary }]}>
+              Target: {goal.targetDate}
+            </Text>
           </View>
         )}
       </Pressable>
@@ -63,55 +75,56 @@ export const GoalCard = ({ goal, progress, onPress, onLongPress, style }: GoalCa
 
 const styles = StyleSheet.create({
   pressable: {
-    padding: Spacing.three,
+    padding: Spacing.five,
   },
-  header: {
+  contentRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.two,
+    justifyContent: 'space-between',
+    gap: Spacing.four,
+  },
+  mainInfo: {
+    flex: 1,
+    gap: Spacing.one,
   },
   title: {
-    ...Typography.h3,
-    fontSize: 18,
-    flex: 1,
-  },
-  percentageContainer: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    backgroundColor: 'rgba(32, 138, 239, 0.1)',
-    borderRadius: Radius.small,
-  },
-  percentage: {
-    ...Typography.small,
-    fontWeight: '700',
-    color: '#208AEF',
+    ...Typography.bodyBold,
+    fontSize: 20,
+    lineHeight: 26,
   },
   description: {
-    ...Typography.small,
-    marginBottom: Spacing.three,
-    opacity: 0.8,
+    ...Typography.body,
+    fontSize: 14,
+    opacity: 0.5,
+    marginTop: 2,
   },
-  progressWrapper: {
-    marginBottom: Spacing.two,
+  progressContainer: {
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  percentageWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  percentageText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginTop: Spacing.one,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    gap: Spacing.one,
     alignItems: 'center',
+    gap: Spacing.two,
+    marginTop: Spacing.four,
+    paddingTop: Spacing.three,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
-  metaLabel: {
-    ...Typography.small,
+  targetDate: {
+    ...Typography.smallBold,
     fontSize: 12,
-  },
-  metaValue: {
-    ...Typography.small,
-    fontSize: 12,
-    fontWeight: '600',
+    opacity: 0.6,
   },
 });

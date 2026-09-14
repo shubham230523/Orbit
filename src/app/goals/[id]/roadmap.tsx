@@ -140,7 +140,7 @@ export default function GoalRoadmapScreen() {
 const styles = StyleSheet.create({
   goalHeader: {
     marginBottom: Spacing.six,
-    paddingHorizontal: Spacing.one,
+    paddingHorizontal: Spacing.four,
   },
   goalLabel: {
     opacity: 0.6,
@@ -153,6 +153,7 @@ const styles = StyleSheet.create({
   listContent: {
     gap: Spacing.three,
     paddingBottom: 40,
+    paddingHorizontal: Spacing.four,
   },
   generateButton: {
     marginTop: Spacing.four,

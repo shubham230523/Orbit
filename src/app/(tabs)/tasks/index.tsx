@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 120,
     paddingHorizontal: Spacing.four,
-    gap: Spacing.two,
+    gap: Spacing.three,
     flexGrow: 1,
   },
   card: {

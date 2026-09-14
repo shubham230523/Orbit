@@ -74,13 +74,12 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: Spacing.four,
+    alignItems: 'flex-end',
   },
   listContent: {
     paddingBottom: 40,
+    paddingHorizontal: Spacing.four,
   },
   blockCard: {
     marginBottom: Spacing.two,

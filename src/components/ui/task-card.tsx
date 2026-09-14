@@ -5,7 +5,6 @@ import { Task } from '@/types/domain';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { Card } from './card';
-import { Badge } from './badge';
 
 export interface TaskCardProps {
   task: Task & { goalTitle?: string };
@@ -47,23 +46,16 @@ export const TaskCard = ({ task, onPress, onToggleComplete }: TaskCardProps) => 
               {task.title}
             </Text>
 
-            <View style={styles.footer}>
-              <View style={styles.badgeRow}>
-                <Badge
-                  label={task.priority}
-                  variant={task.priority === 'high' ? 'error' : task.priority === 'medium' ? 'warning' : 'secondary'}
-                />
-              </View>
-
-              {task.dueDate && (
+            {task.dueDate && (
+              <View style={styles.footer}>
                 <View style={styles.meta}>
-                  <Clock size={14} color={colors.textSecondary} />
+                  <Clock size={12} color={colors.textSecondary} />
                   <Text style={[styles.metaText, { color: colors.textSecondary }]}>
                     {task.dueDate}
                   </Text>
                 </View>
-              )}
-            </View>
+              </View>
+            )}
           </View>
         </View>
       </Pressable>
@@ -80,19 +72,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   goalIndicator: {
-    width: 4,
+    width: 6,
     height: '100%',
   },
   mainRow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.three,
-    gap: Spacing.three,
+    paddingVertical: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.four,
   },
   content: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   title: {
     ...Typography.bodyBold,
@@ -104,7 +97,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    opacity: 0.6,
+    opacity: 0.5,
+    marginBottom: 2,
   },
   completedText: {
     textDecorationLine: 'line-through',
@@ -114,12 +108,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: Spacing.one,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    gap: Spacing.one,
-    alignItems: 'center',
+    marginTop: Spacing.two,
   },
   meta: {
     flexDirection: 'row',
@@ -128,5 +117,6 @@ const styles = StyleSheet.create({
   },
   metaText: {
     ...Typography.small,
+    fontSize: 11,
   },
 });
