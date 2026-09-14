@@ -69,7 +69,8 @@ describe('GoalsScreen', () => {
     (useMutation as jest.Mock).mockReturnValue({ mutate: jest.fn(), isPending: false });
     render(<GoalsScreen />);
 
-    fireEvent.press(screen.getByText('Add Goal'));
+    // Press the floating action button (testID matches button since title is empty)
+    fireEvent.press(screen.getByTestId('button'));
     expect(screen.getByText('Create New Goal')).toBeTruthy();
   });
 });

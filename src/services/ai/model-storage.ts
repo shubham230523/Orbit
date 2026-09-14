@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { isWeb as isWebPlatform } from '@/platform';
 
 export interface ModelStorage {

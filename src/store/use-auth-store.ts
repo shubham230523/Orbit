@@ -18,7 +18,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   setSession: (user, token) => set({ user, token, isLoading: false }),
   clearSession: () => set({ user: null, token: null, isLoading: false }),
   initSession: async () => {
-    // Session bypass enabled for testing
-    set({ isLoading: false });
+    try {
+      const session = await authService.getSession();
+      if (session) {
+        set({ user: session.user, token: session.token, isLoading: false });
+      } else {
+        set({ user: null, token: null, isLoading: false });
+      }
+    } catch (e) {
+      set({ user: null, token: null, isLoading: false });
+    }
   },
 }));

@@ -4,6 +4,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { Card } from './card';
 import { Badge } from './badge';
+import { Button } from './button';
 
 export interface MilestoneCardProps {
   title: string;

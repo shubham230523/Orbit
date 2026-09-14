@@ -49,10 +49,7 @@ export const GoalCard = ({ goal, progress, onPress, style }: GoalCardProps) => {
 
         <View style={styles.footer}>
           <View style={styles.metaRow}>
-            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Target:</Text>
-            <Text style={[styles.metaValue, { color: colors.text }]}>
-              {goal.targetDate || 'No date'}
-            </Text>
+            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Target: {goal.targetDate || 'No date'}</Text>
           </View>
         </View>
       </Pressable>
