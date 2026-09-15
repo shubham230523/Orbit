@@ -3,6 +3,12 @@ import { render, screen, fireEvent } from '@/utils/test-utils';
 import { GoalCard } from '../goal-card';
 import { Goal } from '@/types/domain';
 
+jest.mock('lucide-react-native', () => ({
+  Calendar: 'Calendar',
+  MoreVertical: 'MoreVertical',
+  Trash2: 'Trash2',
+}));
+
 const mockGoal: Goal = {
   id: '1',
   userId: 'u1',
@@ -36,5 +42,13 @@ describe('GoalCard', () => {
     render(<GoalCard goal={minimalGoal} progress={0} />);
     expect(screen.queryByText('Test Description')).toBeNull();
     expect(screen.queryByText('Target:')).toBeNull();
+  });
+
+  it('calls onDelete when delete button is pressed', () => {
+    const onDelete = jest.fn();
+    render(<GoalCard goal={mockGoal} progress={0.5} onDelete={onDelete} />);
+
+    fireEvent.press(screen.getByTestId('goal-card-delete-button'));
+    expect(onDelete).toHaveBeenCalled();
   });
 });

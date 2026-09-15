@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Modal } from '@/components/ui/modal';
 import { Spacing } from '@/constants/theme';
 import { Calendar, Sparkles } from 'lucide-react-native';
 
@@ -72,6 +73,14 @@ export default function TodayScreen() {
         }
         contentContainerStyle={styles.listContent}
       />
+
+      <Modal
+        visible={generateMutation.isPending}
+        onClose={() => {}}
+        title="Planning Your Day"
+      >
+        <LoadingState message="Orbit AI is organizing your tasks for maximum productivity..." />
+      </Modal>
     </Screen>
   );
 }

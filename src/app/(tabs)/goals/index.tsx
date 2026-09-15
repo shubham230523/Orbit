@@ -149,6 +149,7 @@ export default function GoalsScreen() {
               progress={progress}
               onPress={() => router.push(`/goals/${item.id}/roadmap`)}
               onLongPress={() => handleDeletePress(item)}
+              onDelete={() => handleDeletePress(item)}
               style={styles.card}
             />
           );

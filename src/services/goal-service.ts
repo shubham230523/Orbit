@@ -91,6 +91,7 @@ export const goalService = {
       await runExecute('DELETE FROM roadmaps WHERE id = ?', [rm.id]);
     }
 
+    await runExecute('DELETE FROM tasks WHERE goalId = ?', [id]);
     await runExecute('DELETE FROM goals WHERE id = ?', [id]);
   },
 

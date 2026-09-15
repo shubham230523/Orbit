@@ -91,7 +91,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    ...Typography.small,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
+    textAlign: 'center',
   },
 });

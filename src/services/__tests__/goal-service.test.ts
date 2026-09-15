@@ -102,6 +102,10 @@ describe('GoalService', () => {
       ['roadmap-1']
     );
     expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM tasks WHERE goalId = ?'),
+      ['goal-1']
+    );
+    expect(runExecute).toHaveBeenCalledWith(
       expect.stringContaining('DELETE FROM goals WHERE id = ?'),
       ['goal-1']
     );
