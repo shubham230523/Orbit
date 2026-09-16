@@ -13,13 +13,19 @@ import { Modal } from '@/components/ui/modal';
 import { Spacing } from '@/constants/theme';
 import { Calendar, Sparkles } from 'lucide-react-native';
 import { formatTime12h } from '@/utils/date';
+import { taskService } from '@/services/task-service';
 
 export default function TodayScreen() {
   const queryClient = useQueryClient();
 
-  const { data: schedule, isLoading, isError, error, refetch } = useQuery({
+  const { data: schedule, isLoading: isScheduleLoading, isError: isScheduleError, error: scheduleError, refetch: refetchSchedule } = useQuery({
     queryKey: ['schedule'],
     queryFn: scheduleService.getSchedule,
+  });
+
+  const { data: tasks, isLoading: isTasksLoading } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: taskService.getTasks,
   });
 
   const generateMutation = useMutation({
@@ -45,14 +51,12 @@ export default function TodayScreen() {
     },
   });
 
-  if (isLoading) return <LoadingState />;
-  if (isError) return <ErrorState message={error.message} onRetry={refetch} />;
+  if (isScheduleLoading || isTasksLoading) return <LoadingState />;
+  if (isScheduleError) return <ErrorState message={scheduleError.message} onRetry={refetchSchedule} />;
 
   // Get current HH:MM string for comparison
   const now = new Date();
   const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-  const tasksQuery = queryClient.getQueryData(['tasks']) as any[];
 
   return (
     <Screen scrollable={false}>
@@ -79,7 +83,7 @@ export default function TodayScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           // Check associated task state
-          const associatedTask = item.taskId && tasksQuery ? tasksQuery.find(t => t.id === item.taskId) : null;
+          const associatedTask = item.taskId && tasks ? tasks.find(t => t.id === item.taskId) : null;
           const isTaskCompleted = associatedTask ? associatedTask.status === 'completed' : false;
 
           // Determine if missed: if current day time is greater than task end time (or start time if no duration) and not completed

@@ -59,7 +59,12 @@ describe('TodayScreen', () => {
   });
 
   it('renders error state', () => {
-    (useQuery as jest.Mock).mockReturnValue({ isError: true, error: { message: 'Failed' } });
+    (useQuery as jest.Mock).mockImplementation(({ queryKey }) => {
+      if (queryKey[0] === 'schedule') {
+        return { isError: true, error: { message: 'Failed' } };
+      }
+      return { data: [], isLoading: false };
+    });
     render(<TodayScreen />);
     expect(screen.getByText('Failed')).toBeTruthy();
   });
@@ -72,8 +77,15 @@ describe('TodayScreen', () => {
   });
 
   it('renders schedule data', () => {
-    const mockData = [{ id: '1', title: 'Work', startTime: '9:00', endTime: '10:00' }];
-    (useQuery as jest.Mock).mockReturnValue({ data: mockData, isLoading: false });
+    const mockSchedule = [{ id: '1', title: 'Work', startTime: '09:00', endTime: '10:00', taskId: 't1', type: 'TASK' }];
+    const mockTasks = [{ id: 't1', title: 'Work', status: 'todo' }];
+
+    (useQuery as jest.Mock).mockImplementation(({ queryKey }) => {
+      if (queryKey[0] === 'schedule') return { data: mockSchedule, isLoading: false };
+      if (queryKey[0] === 'tasks') return { data: mockTasks, isLoading: false };
+      return { data: [], isLoading: false };
+    });
+
     (useMutation as jest.Mock).mockReturnValue({ isPending: false });
     render(<TodayScreen />);
     expect(screen.getByText('Work')).toBeTruthy();
