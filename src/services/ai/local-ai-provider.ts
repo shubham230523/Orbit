@@ -88,7 +88,17 @@ export class LocalAIProvider implements AIProvider {
       duration: t.estimatedDuration || 30
     }));
 
-    const rawPrompt = `Generate an optimal schedule for these tasks: ${JSON.stringify(simplifiedTasks)}. My availability: "${availability}".`;
+    const rawPrompt = `Generate a high-level daily schedule for these tasks: ${JSON.stringify(simplifiedTasks)}.
+
+    STRICT CONSTRAINTS:
+    - Schedule each unique task ID exactly ONCE. Do not repeat tasks.
+    - Start with Sleep (e.g., 00:00 to 07:00).
+    - Include exactly 3 meal blocks (Breakfast, Lunch, Dinner).
+    - Use 24-hour format (HH:MM) and stay between 00:00 and 23:59.
+    - My work availability is: "${availability}".
+    - Total items in 'schedule' array MUST NOT exceed 12 items.
+    - Current time: ${new Date().getHours()}:${new Date().getMinutes()}.`;
+
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     console.log('[LocalAIProvider] Inference prompt sent');
     const result = await this.executeInference(prompt);
@@ -115,7 +125,11 @@ export class LocalAIProvider implements AIProvider {
     if (firstBrace !== -1 && lastBrace !== -1) {
       cleaned = cleaned.substring(firstBrace, lastBrace + 1);
     } else if (firstBrace !== -1 && lastBrace === -1) {
-      console.warn('[LocalAIProvider] JSON appears truncated (missing closing brace)');
+      console.warn('[LocalAIProvider] JSON appears truncated, attempting recovery');
+      // Very basic recovery: add missing closing brackets/braces
+      cleaned = cleaned.trim();
+      if (!cleaned.endsWith('}')) cleaned += '}]}';
+      else if (!cleaned.endsWith(']')) cleaned += ']}';
     }
 
     return cleaned;

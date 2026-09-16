@@ -58,8 +58,8 @@ export class AndroidAIAdapter implements PlatformAIAdapter {
       await this.context.completion(
         {
           prompt: fullPrompt,
-          n_predict: 1024,
-          temperature: request.temperature || 0.2,
+          n_predict: 3072, // Further increased to handle detailed schedules
+          temperature: 0.1, // Lowered for more deterministic/stable output
           stop: ['<|im_end|>', '<|endoftext|>'],
         },
         (data: any) => {

@@ -65,11 +65,13 @@ describe('ScheduleService', () => {
     const mockTasks = [{ id: 'task-1', title: 'Task 1' }];
     const mockAIResponse = {
       schedule: [
-        { taskId: 'task-1', startTime: '09:00', endTime: '10:00' }
+        { taskId: 'task-1', startTime: '09:00', endTime: '10:00', reason: 'Focus' },
+        { title: 'Lunch', startTime: '12:00', endTime: '13:00', type: 'BREAK', reason: 'Eat' }
       ]
     };
     const mockProvider = {
       generateSchedule: jest.fn().mockResolvedValue(mockAIResponse),
+      getType: jest.fn().mockReturnValue('LOCAL'),
     };
 
     (taskService.getTasks as jest.Mock).mockResolvedValue(mockTasks);
@@ -78,7 +80,7 @@ describe('ScheduleService', () => {
 
     const result = await scheduleService.generateSchedule();
 
-    expect(result).toHaveLength(1);
+    expect(result).toHaveLength(2);
     expect(result[0].taskId).toBe('task-1');
     expect(mockProvider.generateSchedule).toHaveBeenCalled();
     expect(runExecute).toHaveBeenCalledWith(
@@ -88,6 +90,17 @@ describe('ScheduleService', () => {
     expect(runExecute).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO schedule_blocks'),
       expect.arrayContaining(['new-block-uuid', 'task-1', '09:00', '10:00'])
+    );
+  });
+
+  it('clears the schedule', async () => {
+    (runExecute as jest.Mock).mockResolvedValueOnce(undefined);
+
+    await scheduleService.clearSchedule();
+
+    expect(runExecute).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM schedule_blocks WHERE userId = ?'),
+      [mockUser.id]
     );
   });
 });

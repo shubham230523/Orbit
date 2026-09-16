@@ -25,9 +25,11 @@ export const GoalAnalysisSchema = z.object({
 export const SchedulerSchema = z.object({
   schedule: z.array(
     z.object({
-      taskId: z.string(),
+      taskId: z.string().optional(),
+      title: z.string().optional(),
       startTime: z.string(),
       endTime: z.string(),
+      type: z.enum(['TASK', 'EVENT', 'FOCUS', 'BREAK']).optional().default('TASK'),
       reason: z.string(),
     }),
   ),
@@ -36,9 +38,10 @@ export const SchedulerSchema = z.object({
 export const PROMPT_SCHEMAS = {
   ROADMAP: '{"milestones": [{"title": "Milestone Title", "description": "Short description", "estimatedWeeks": 1}]}',
   GOAL_ANALYSIS: '{"objective": "Specific goal objective", "constraints": ["Constraint 1"], "measurableOutcomes": ["Outcome 1"], "estimatedDurationWeeks": 4, "category": "Category Name"}',
-  SCHEDULER: '{"schedule": [{"taskId": "id", "startTime": "HH:MM", "endTime": "HH:MM", "reason": "Why this time"}]}',
+  SCHEDULER: '{"schedule": [{"taskId": "id", "title": "Task or Event Name", "startTime": "HH:MM", "endTime": "HH:MM", "type": "TASK | EVENT | FOCUS | BREAK", "reason": "Why this time"}]}',
 };
 
 export function wrapInJsonInstruction(prompt: string, schema: string): string {
-  return `${prompt}\n\nIMPORTANT: You must output ONLY a valid JSON object. Do not include any conversation, markdown code blocks, or extra characters. Ensure all array fields are actual JSON arrays.\n\nRequired JSON Structure:\n${schema}`;
+  const timeContext = schema === PROMPT_SCHEMAS.SCHEDULER ? "\n- Use 24-hour format (HH:MM) for JSON values (e.g., 13:00 for 1 PM).\n- Do NOT exceed 23:59. For midnight, use 00:00.\n- Ensure realistic work hours and breaks." : "";
+  return `${prompt}\n\nIMPORTANT: You must output ONLY a valid JSON object. Do not include any conversation, markdown code blocks, or extra characters. Ensure all array fields are actual JSON arrays.${timeContext}\n\nRequired JSON Structure:\n${schema}`;
 }

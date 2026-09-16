@@ -76,6 +76,6 @@ describe('TodayScreen', () => {
     (useMutation as jest.Mock).mockReturnValue({ isPending: false });
     render(<TodayScreen />);
     expect(screen.getByText('Work')).toBeTruthy();
-    expect(screen.getByText('9:00')).toBeTruthy();
+    expect(screen.getByText('9:00 AM')).toBeTruthy();
   });
 });

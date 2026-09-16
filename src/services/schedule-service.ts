@@ -37,14 +37,16 @@ export const scheduleService = {
 
     const blocks: ScheduleBlock[] = [];
     for (const item of aiResponse.schedule) {
+      const taskTitle = item.taskId ? tasks.find(t => t.id === item.taskId)?.title : undefined;
+
       const block: ScheduleBlock = {
         id: uuidv4(),
         userId,
         taskId: item.taskId,
-        title: tasks.find(t => t.id === item.taskId)?.title || 'Scheduled Task',
+        title: taskTitle || item.title || 'Scheduled Item',
         startTime: item.startTime,
         endTime: item.endTime,
-        type: 'TASK',
+        type: item.type || (item.taskId ? 'TASK' : 'EVENT'),
       };
 
       await runExecute(
@@ -57,5 +59,11 @@ export const scheduleService = {
     console.log('[ScheduleService] Saved', blocks.length, 'new schedule blocks');
 
     return blocks;
+  },
+
+  async clearSchedule(): Promise<void> {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+    await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
   },
 };

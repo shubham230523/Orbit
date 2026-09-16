@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Modal } from '@/components/ui/modal';
 import { Spacing } from '@/constants/theme';
 import { Calendar, Sparkles } from 'lucide-react-native';
+import { formatTime12h } from '@/utils/date';
 
 export default function TodayScreen() {
   const queryClient = useQueryClient();
@@ -32,12 +33,26 @@ export default function TodayScreen() {
     }
   });
 
+  const clearMutation = useMutation({
+    mutationFn: scheduleService.clearSchedule,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+    },
+  });
+
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState message={error.message} onRetry={refetch} />;
 
   return (
     <Screen scrollable={false}>
       <View style={styles.header}>
+        <Button
+          title="Clear"
+          variant="ghost"
+          size="small"
+          onPress={() => clearMutation.mutate()}
+          disabled={clearMutation.isPending || schedule?.length === 0}
+        />
         <Button
           title="Plan Day"
           variant="outline"
@@ -55,8 +70,8 @@ export default function TodayScreen() {
           <Card style={styles.blockCard}>
             <View style={styles.blockContent}>
               <View style={styles.timeColumn}>
-                <ThemedText type="small">{item.startTime}</ThemedText>
-                <ThemedText type="small" style={{ opacity: 0.5 }}>{item.endTime}</ThemedText>
+                <ThemedText type="small" numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.startTime)}</ThemedText>
+                <ThemedText type="small" style={{ opacity: 0.5 }} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.endTime)}</ThemedText>
               </View>
               <View style={styles.titleColumn}>
                 <ThemedText type="bodyBold">{item.title}</ThemedText>
@@ -88,7 +103,10 @@ export default function TodayScreen() {
 const styles = StyleSheet.create({
   header: {
     marginBottom: Spacing.four,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing.two,
+    alignItems: 'center',
   },
   listContent: {
     paddingBottom: 40,
@@ -103,7 +121,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   timeColumn: {
-    width: 60,
+    width: 80,
     alignItems: 'flex-end',
   },
   titleColumn: {
