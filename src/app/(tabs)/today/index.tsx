@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   timeColumn: {
-    width: 80,
+    width: 90,
     alignItems: 'flex-end',
   },
   titleColumn: {

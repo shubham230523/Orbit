@@ -88,16 +88,21 @@ export class LocalAIProvider implements AIProvider {
       duration: t.estimatedDuration || 30
     }));
 
-    const rawPrompt = `Generate a high-level daily schedule for these tasks: ${JSON.stringify(simplifiedTasks)}.
+    const rawPrompt = `Create a sequential timeline starting from ${new Date().getHours()}:${new Date().getMinutes()} until tomorrow.
 
-    STRICT CONSTRAINTS:
-    - Schedule each unique task ID exactly ONCE. Do not repeat tasks.
-    - Start with Sleep (e.g., 00:00 to 07:00).
-    - Include exactly 3 meal blocks (Breakfast, Lunch, Dinner).
-    - Use 24-hour format (HH:MM) and stay between 00:00 and 23:59.
-    - My work availability is: "${availability}".
-    - Total items in 'schedule' array MUST NOT exceed 12 items.
-    - Current time: ${new Date().getHours()}:${new Date().getMinutes()}.`;
+    TASKS TO SCHEDULE (Exactly once each):
+    ${JSON.stringify(simplifiedTasks)}
+
+    MANDATORY LIFE BLOCKS (MUST BE INCLUDED):
+    - "Sleep" (e.g., 23:00 to 07:00)
+    - "Dinner" (approx 19:00)
+    - "Lunch" (approx 13:00)
+
+    STRICT CHRONOLOGY:
+    1. Items MUST be in order of time.
+    2. 'endTime' of one item MUST match 'startTime' of the next. No overlaps.
+    3. Use 24-hour HH:MM. Never exceed 23:59 for today.
+    4. Maximum 12 items total in 'schedule' array.`;
 
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     console.log('[LocalAIProvider] Inference prompt sent');
@@ -144,7 +149,7 @@ export class LocalAIProvider implements AIProvider {
     const result = await this.adapter.infer({
       prompt,
       systemPrompt,
-      temperature: 0.3 // Slightly higher for better completion flow
+      temperature: 0.0 // Minimum temperature for maximum logic/stability
     });
     console.log('[LocalAIProvider] Inference result received, length:', result.text.length);
     return result;
