@@ -86,9 +86,10 @@ describe('LocalAIProvider', () => {
       tokensPerSecond: 10
     });
     await provider.initialize();
-    const result = await provider.generateSchedule([], '9-5');
-    expect(result.schedule[0].taskId).toBe('1');
-    expect(result.schedule[0].reason).toBe('Focus');
+    const result = await provider.generateSchedule([], '5-21');
+    expect(result.schedule[0].title).toBe('Sleep');
+    expect(result.schedule[1].taskId).toBe('1');
+    expect(result.schedule[1].reason).toBe('Focus');
   });
 
   it('chats correctly', async () => {

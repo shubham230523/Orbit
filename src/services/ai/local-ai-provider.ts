@@ -85,37 +85,206 @@ export class LocalAIProvider implements AIProvider {
       id: t.id,
       title: t.title,
       priority: t.priority,
-      duration: t.estimatedDuration || 30
+      duration: t.estimatedDuration || 60
     }));
 
     const rawPrompt = `Generate a realistic daily schedule for today.
-    Current Time: ${new Date().getHours()}:${new Date().getMinutes()}
+    The active day MUST start at 05:00 AM.
 
-    TASKS (exactly once each): ${JSON.stringify(simplifiedTasks)}
+    TASKS TO ORDER/SCHEDULE (Schedule each exactly once): ${JSON.stringify(simplifiedTasks)}
 
     STRICT CONSTRAINTS:
-    - Include exactly 1 Sleep, 1 Breakfast, 1 Lunch, 1 Dinner.
-    - StartTime of next MUST EQUAL EndTime of previous.
-    - Stay within 00:00 to 23:59. STOP at 23:59.
-    - Each Task ID MUST appear exactly ONCE.
-    - MAX 15 total blocks.
+    - Order these tasks logically through the day starting from 05:00 AM.
+    - Do NOT assign the same startTime and endTime to every task. Time must advance chronologically for each item.
+    - Sleep must total 8 hours.
+    - Include Breakfast, Lunch, and Dinner at appropriate times.
+    - Include 10-minute breaks after tasks.
 
     JSON FORMAT: Output ONLY the JSON array inside {"schedule": [...]}. No text.`;
 
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     console.log('[LocalAIProvider] Inference prompt sent');
-    const result = await this.executeInference(prompt);
-    console.log('[LocalAIProvider] Inference result raw text length:', result.text.length);
-    const cleaned = this.cleanJsonResponse(result.text);
-    console.log('[LocalAIProvider] Cleaned JSON:', cleaned);
+
+    let parsed: any = null;
     try {
-      const parsed = SchedulerSchema.parse(JSON.parse(cleaned));
+      const result = await this.executeInference(prompt);
+      console.log('[LocalAIProvider] Inference result raw text length:', result.text.length);
+      const cleaned = this.cleanJsonResponse(result.text);
+      console.log('[LocalAIProvider] Cleaned JSON:', cleaned);
+      parsed = SchedulerSchema.parse(JSON.parse(cleaned));
       console.log('[LocalAIProvider] Parsed schedule length:', parsed.schedule.length);
-      return parsed;
     } catch (e) {
-      console.error('[LocalAIProvider] Failed to parse AI response:', e);
-      throw e;
+      console.error('[LocalAIProvider] Failed to get or parse AI response, using fallback layout:', e);
     }
+
+    // Process and guarantee a robust chronological schedule starting at 05:00 AM with sleep, meals, and breaks
+    const finalSchedule: any[] = [];
+
+    const toHHMM = (mins: number) => {
+      const h = Math.floor(mins / 60) % 24;
+      const m = mins % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
+    // 1. Initial Sleep: 00:00 to 05:00 (5 hours)
+    finalSchedule.push({
+      title: 'Sleep',
+      startTime: '00:00',
+      endTime: '05:00',
+      type: 'BREAK',
+      reason: 'Rest'
+    });
+
+    let currentMins = 5 * 60; // 05:00 AM
+    let breakfastScheduled = false;
+    let lunchScheduled = false;
+    let dinnerScheduled = false;
+
+    // Gather unique tasks in the order proposed by the AI, or original order if AI failed
+    let orderedTasks: any[] = [];
+    if (parsed && parsed.schedule && Array.isArray(parsed.schedule)) {
+      const seenTaskIds = new Set<string>();
+      for (const item of parsed.schedule) {
+        if (item.taskId) {
+          if (!seenTaskIds.has(item.taskId)) {
+            seenTaskIds.add(item.taskId);
+            const orig = tasks.find(t => t.id === item.taskId);
+            orderedTasks.push({
+              id: item.taskId,
+              title: orig?.title || item.title || 'Task',
+              duration: orig?.estimatedDuration || 60,
+              reason: item.reason
+            });
+          }
+        } else if (item.title && (item.type === 'TASK' || !item.type)) {
+          orderedTasks.push({
+            title: item.title,
+            duration: 60,
+            reason: item.reason
+          });
+        }
+      }
+    }
+
+    // Fallback/Union with any tasks that weren't included
+    if (orderedTasks.length === 0) {
+      orderedTasks = tasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        duration: t.estimatedDuration || 60
+      }));
+    }
+
+    // Allocate tasks and events into the waking hours window (05:00 to 21:00)
+    for (const task of orderedTasks) {
+      // Breakfast around 07:00 AM onwards
+      if (!breakfastScheduled && currentMins >= 7 * 60) {
+        if (currentMins + 30 <= 21 * 60) {
+          finalSchedule.push({
+            title: 'Breakfast',
+            startTime: toHHMM(currentMins),
+            endTime: toHHMM(currentMins + 30),
+            type: 'BREAK',
+            reason: 'Morning Meal'
+          });
+          currentMins += 30;
+          breakfastScheduled = true;
+        }
+      }
+
+      // Lunch around 12:30 PM onwards
+      if (!lunchScheduled && currentMins >= 12.5 * 60) {
+        if (currentMins + 45 <= 21 * 60) {
+          finalSchedule.push({
+            title: 'Lunch',
+            startTime: toHHMM(currentMins),
+            endTime: toHHMM(currentMins + 45),
+            type: 'BREAK',
+            reason: 'Midday Meal'
+          });
+          currentMins += 45;
+          lunchScheduled = true;
+        }
+      }
+
+      // Dinner around 18:30 PM onwards
+      if (!dinnerScheduled && currentMins >= 18.5 * 60) {
+        if (currentMins + 45 <= 21 * 60) {
+          finalSchedule.push({
+            title: 'Dinner',
+            startTime: toHHMM(currentMins),
+            endTime: toHHMM(currentMins + 45),
+            type: 'BREAK',
+            reason: 'Evening Meal'
+          });
+          currentMins += 45;
+          dinnerScheduled = true;
+        }
+      }
+
+      const duration = task.duration || 60;
+      if (currentMins + duration <= 21 * 60) {
+        finalSchedule.push({
+          taskId: task.id,
+          title: task.title,
+          startTime: toHHMM(currentMins),
+          endTime: toHHMM(currentMins + duration),
+          type: 'TASK',
+          reason: task.reason
+        });
+        currentMins += duration;
+
+        // Add 10-minute break after 1 hour of work or per task
+        if (currentMins + 10 <= 21 * 60) {
+          finalSchedule.push({
+            title: 'Break',
+            startTime: toHHMM(currentMins),
+            endTime: toHHMM(currentMins + 10),
+            type: 'BREAK',
+            reason: 'Short rest'
+          });
+          currentMins += 10;
+        }
+      } else {
+        break; // Day is full
+      }
+    }
+
+    // Ensure missing meals are included if few tasks
+    if (!breakfastScheduled && currentMins + 30 <= 21 * 60) {
+      finalSchedule.push({ title: 'Breakfast', startTime: toHHMM(currentMins), endTime: toHHMM(currentMins + 30), type: 'BREAK' });
+      currentMins += 30;
+    }
+    if (!lunchScheduled && currentMins + 45 <= 21 * 60) {
+      finalSchedule.push({ title: 'Lunch', startTime: toHHMM(currentMins), endTime: toHHMM(currentMins + 45), type: 'BREAK' });
+      currentMins += 45;
+    }
+    if (!dinnerScheduled && currentMins + 45 <= 21 * 60) {
+      finalSchedule.push({ title: 'Dinner', startTime: toHHMM(currentMins), endTime: toHHMM(currentMins + 45), type: 'BREAK' });
+      currentMins += 45;
+    }
+
+    // Fill remaining time with Miscellaneous & Buffer
+    if (currentMins < 21 * 60) {
+      finalSchedule.push({
+        title: 'Miscellaneous & Leisure',
+        startTime: toHHMM(currentMins),
+        endTime: '21:00',
+        type: 'EVENT',
+        reason: 'Free time / Buffer'
+      });
+    }
+
+    // 2. Final Sleep: 21:00 to 23:59 (3 hours) -> Total 8 hours of sleep
+    finalSchedule.push({
+      title: 'Sleep',
+      startTime: '21:00',
+      endTime: '23:59',
+      type: 'BREAK',
+      reason: 'Rest'
+    });
+
+    return { schedule: finalSchedule };
   }
 
   private cleanJsonResponse(text: string): string {

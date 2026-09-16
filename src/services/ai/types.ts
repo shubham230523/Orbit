@@ -48,10 +48,12 @@ export interface GoalAnalysisAIResponse {
 }
 
 export interface ScheduledTask {
-  taskId: string;
+  taskId?: string;
+  title?: string;
   startTime: string;
   endTime: string;
-  reason: string;
+  type?: 'TASK' | 'EVENT' | 'FOCUS' | 'BREAK';
+  reason?: string;
 }
 
 export interface SchedulerAIResponse {

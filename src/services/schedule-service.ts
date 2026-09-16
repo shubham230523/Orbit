@@ -32,7 +32,7 @@ export const scheduleService = {
     await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
 
     // In local-first, we use the local provider's generation logic
-    const aiResponse = await provider.generateSchedule(tasks, '9 AM to 5 PM');
+    const aiResponse = await provider.generateSchedule(tasks, '5 AM to 9 PM');
     console.log('[ScheduleService] AI response received. Schedule items:', aiResponse.schedule.length);
 
     const blocks: ScheduleBlock[] = [];
