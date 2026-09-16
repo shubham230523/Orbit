@@ -32,7 +32,7 @@ export class AndroidAIAdapter implements PlatformAIAdapter {
       this.context = await initLlama({
         model: formattedPath,
         use_mlock: false,
-        n_ctx: 2048,
+        n_ctx: 4096, // Increased from 2048 to handle more tasks
         n_gpu_layers: 0, // Stability first for 4GB RAM devices
       });
       console.log('[AndroidAIAdapter] Context created successfully');

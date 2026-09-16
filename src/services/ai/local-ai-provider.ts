@@ -79,7 +79,16 @@ export class LocalAIProvider implements AIProvider {
 
   async generateSchedule(tasks: any[], availability: string): Promise<SchedulerAIResponse> {
     console.log('[LocalAIProvider] generateSchedule called with', tasks.length, 'tasks');
-    const rawPrompt = `Generate an optimal schedule for these tasks: ${JSON.stringify(tasks)}. My availability: "${availability}".`;
+
+    // Simplify task data to save tokens and improve reliability
+    const simplifiedTasks = tasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      priority: t.priority,
+      duration: t.estimatedDuration || 30
+    }));
+
+    const rawPrompt = `Generate an optimal schedule for these tasks: ${JSON.stringify(simplifiedTasks)}. My availability: "${availability}".`;
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     console.log('[LocalAIProvider] Inference prompt sent');
     const result = await this.executeInference(prompt);
@@ -105,6 +114,8 @@ export class LocalAIProvider implements AIProvider {
     const lastBrace = cleaned.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
       cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    } else if (firstBrace !== -1 && lastBrace === -1) {
+      console.warn('[LocalAIProvider] JSON appears truncated (missing closing brace)');
     }
 
     return cleaned;
@@ -116,8 +127,12 @@ export class LocalAIProvider implements AIProvider {
       console.error('[LocalAIProvider] Model not loaded. Current status:', this.status);
       throw new Error('Local model not loaded.');
     }
-    const result = await this.adapter.infer({ prompt, systemPrompt });
-    console.log('[LocalAIProvider] Inference result received');
+    const result = await this.adapter.infer({
+      prompt,
+      systemPrompt,
+      temperature: 0.3 // Slightly higher for better completion flow
+    });
+    console.log('[LocalAIProvider] Inference result received, length:', result.text.length);
     return result;
   }
 
