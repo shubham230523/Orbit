@@ -30,7 +30,7 @@ export const SchedulerSchema = z.object({
       startTime: z.string(),
       endTime: z.string(),
       type: z.enum(['TASK', 'EVENT', 'FOCUS', 'BREAK']).optional().default('TASK'),
-      reason: z.string(),
+      reason: z.string().optional(),
     }),
   ),
 });
@@ -38,7 +38,7 @@ export const SchedulerSchema = z.object({
 export const PROMPT_SCHEMAS = {
   ROADMAP: '{"milestones": [{"title": "Milestone Title", "description": "Short description", "estimatedWeeks": 1}]}',
   GOAL_ANALYSIS: '{"objective": "Specific goal objective", "constraints": ["Constraint 1"], "measurableOutcomes": ["Outcome 1"], "estimatedDurationWeeks": 4, "category": "Category Name"}',
-  SCHEDULER: '{"schedule": [{"taskId": "id", "title": "Task or Event Name", "startTime": "HH:MM", "endTime": "HH:MM", "type": "TASK | EVENT | FOCUS | BREAK", "reason": "Why this time"}]}',
+  SCHEDULER: '{"schedule": [{"taskId": "id", "title": "Name", "startTime": "HH:MM", "endTime": "HH:MM", "type": "TASK"}]}',
 };
 
 export function wrapInJsonInstruction(prompt: string, schema: string): string {

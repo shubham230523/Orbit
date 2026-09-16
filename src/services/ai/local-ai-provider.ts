@@ -88,21 +88,16 @@ export class LocalAIProvider implements AIProvider {
       duration: t.estimatedDuration || 30
     }));
 
-    const rawPrompt = `Create a sequential timeline starting from ${new Date().getHours()}:${new Date().getMinutes()} until tomorrow.
+    const rawPrompt = `FAST SCHEDULE from ${new Date().getHours()}:${new Date().getMinutes()} until tomorrow.
 
-    TASKS TO SCHEDULE (Exactly once each):
-    ${JSON.stringify(simplifiedTasks)}
-
-    MANDATORY LIFE BLOCKS (MUST BE INCLUDED):
-    - "Sleep" (e.g., 23:00 to 07:00)
-    - "Dinner" (approx 19:00)
-    - "Lunch" (approx 13:00)
+    TASKS: ${JSON.stringify(simplifiedTasks)}
+    MANDATORY: Sleep, Lunch, Dinner.
 
     STRICT CHRONOLOGY:
-    1. Items MUST be in order of time.
-    2. 'endTime' of one item MUST match 'startTime' of the next. No overlaps.
-    3. Use 24-hour HH:MM. Never exceed 23:59 for today.
-    4. Maximum 12 items total in 'schedule' array.`;
+    1. Items in order. StartTime of next = EndTime of previous.
+    2. Stay within 00:00 - 23:59. Each Task ID exactly once.
+    3. BE EXTREMELY CONCISE: No 'reason' field. Use short titles.
+    4. Max 10 items total.`;
 
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     console.log('[LocalAIProvider] Inference prompt sent');

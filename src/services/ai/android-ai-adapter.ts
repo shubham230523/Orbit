@@ -32,8 +32,8 @@ export class AndroidAIAdapter implements PlatformAIAdapter {
       this.context = await initLlama({
         model: formattedPath,
         use_mlock: false,
-        n_ctx: 4096, // Increased from 2048 to handle more tasks
-        n_gpu_layers: 0, // Stability first for 4GB RAM devices
+        n_ctx: 2048, // Reduced back to 2048 for faster processing
+        n_gpu_layers: 35, // Enabled GPU acceleration (offloading all layers for 1.5B model)
       });
       console.log('[AndroidAIAdapter] Context created successfully');
     } catch (error) {
@@ -58,8 +58,8 @@ export class AndroidAIAdapter implements PlatformAIAdapter {
       await this.context.completion(
         {
           prompt: fullPrompt,
-          n_predict: 1024, // Reduced from 3072 to significantly speed up response
-          temperature: 0.0, // Minimum temperature for maximum logic/stability
+          n_predict: 768, // Reduced for speed
+          temperature: 0.0,
           stop: ['<|im_end|>', '<|endoftext|>'],
         },
         (data: any) => {
