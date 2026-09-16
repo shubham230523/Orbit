@@ -35,6 +35,7 @@ jest.mock('@tanstack/react-query', () => {
     useMutation: jest.fn(),
     useQueryClient: jest.fn(() => ({
       invalidateQueries: jest.fn(),
+      getQueryData: jest.fn(() => []),
     })),
   };
 });

@@ -67,13 +67,34 @@ export default function TasksScreen() {
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TaskCard
-            task={item}
-            onToggleComplete={() => toggleTaskMutation.mutate(item)}
-            style={styles.card}
-          />
-        )}
+        renderItem={({ item }) => {
+          // Determine if missed: check if there's a schedule block for this task that has already passed its end time
+          const scheduleBlocks = queryClient.getQueryData(['schedule']) as any[];
+          const associatedBlock = scheduleBlocks ? scheduleBlocks.find(b => b.taskId === item.id) : null;
+
+          let displayStatus = item.status;
+          if (associatedBlock && item.status !== 'completed') {
+            const now = new Date();
+            const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            if (associatedBlock.endTime < currentHHMM) {
+              displayStatus = 'blocked'; // Use blocked status or represent visually as missed
+            }
+          }
+
+          const enhancedTask = {
+            ...item,
+            status: displayStatus === 'blocked' && item.status !== 'completed' ? 'blocked' : item.status,
+            title: displayStatus === 'blocked' && item.status !== 'completed' ? `${item.title} (Missed)` : item.title
+          };
+
+          return (
+            <TaskCard
+              task={enhancedTask as any}
+              onToggleComplete={() => toggleTaskMutation.mutate(item)}
+              style={styles.card}
+            />
+          );
+        }}
         ListEmptyComponent={
           <EmptyState
             title="No tasks yet"

@@ -48,6 +48,12 @@ export default function TodayScreen() {
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState message={error.message} onRetry={refetch} />;
 
+  // Get current HH:MM string for comparison
+  const now = new Date();
+  const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  const tasksQuery = queryClient.getQueryData(['tasks']) as any[];
+
   return (
     <Screen scrollable={false}>
       <View style={styles.header}>
@@ -71,19 +77,34 @@ export default function TodayScreen() {
       <FlatList
         data={schedule}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Card style={styles.blockCard}>
-            <View style={styles.blockContent}>
-              <View style={styles.timeColumn}>
-                <ThemedText type="small" numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.startTime)}</ThemedText>
-                <ThemedText type="small" style={{ opacity: 0.5 }} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.endTime)}</ThemedText>
+        renderItem={({ item }) => {
+          // Check associated task state
+          const associatedTask = item.taskId && tasksQuery ? tasksQuery.find(t => t.id === item.taskId) : null;
+          const isTaskCompleted = associatedTask ? associatedTask.status === 'completed' : false;
+
+          // Determine if missed: if current day time is greater than task end time (or start time if no duration) and not completed
+          const isMissed = item.type === 'TASK' && !isTaskCompleted && item.endTime < currentHHMM;
+
+          return (
+            <Card style={[styles.blockCard, isTaskCompleted && styles.completedBlockCard, isMissed && styles.missedBlockCard]}>
+              <View style={styles.blockContent}>
+                <View style={styles.timeColumn}>
+                  <ThemedText type="small" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.startTime)}</ThemedText>
+                  <ThemedText type="small" style={[{ opacity: 0.5 }, isTaskCompleted && styles.completedText, isMissed && styles.missedText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.endTime)}</ThemedText>
+                </View>
+                <View style={styles.titleColumn}>
+                  <ThemedText type="bodyBold" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText]}>{item.title}</ThemedText>
+                  {isTaskCompleted && (
+                    <ThemedText type="small" style={styles.badgeCompleted}>✓ Done</ThemedText>
+                  )}
+                  {isMissed && (
+                    <ThemedText type="small" style={styles.badgeMissed}>✕ Missed</ThemedText>
+                  )}
+                </View>
               </View>
-              <View style={styles.titleColumn}>
-                <ThemedText type="bodyBold">{item.title}</ThemedText>
-              </View>
-            </View>
-          </Card>
-        )}
+            </Card>
+          );
+        }}
         ListEmptyComponent={
           <EmptyState
             title="Your day is clear"
@@ -132,5 +153,32 @@ const styles = StyleSheet.create({
   titleColumn: {
     flex: 1,
     justifyContent: 'center',
+  },
+  completedBlockCard: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#C8E6C9',
+  },
+  missedBlockCard: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#FFCDD2',
+  },
+  completedText: {
+    textDecorationLine: 'line-through',
+    color: '#388E3C',
+    opacity: 0.7,
+  },
+  missedText: {
+    color: '#D32F2F',
+    opacity: 0.8,
+  },
+  badgeCompleted: {
+    color: '#2E7D32',
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  badgeMissed: {
+    color: '#C62828',
+    fontWeight: 'bold',
+    marginTop: 2,
   },
 });
