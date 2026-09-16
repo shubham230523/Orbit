@@ -27,13 +27,13 @@ export const scheduleService = {
     const tasks = await taskService.getTasks();
     console.log('[ScheduleService] Found', tasks.length, 'tasks to schedule');
 
+    // Clear existing schedule for today immediately to ensure a fresh start
+    console.log('[ScheduleService] Clearing existing schedule for user:', userId);
+    await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
+
     // In local-first, we use the local provider's generation logic
     const aiResponse = await provider.generateSchedule(tasks, '9 AM to 5 PM');
     console.log('[ScheduleService] AI response received. Schedule items:', aiResponse.schedule.length);
-
-    // Clear existing schedule for today (simplified for this spike)
-    console.log('[ScheduleService] Clearing existing schedule for user:', userId);
-    await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
 
     const blocks: ScheduleBlock[] = [];
     for (const item of aiResponse.schedule) {

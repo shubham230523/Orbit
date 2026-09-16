@@ -24,6 +24,11 @@ export default function TodayScreen() {
 
   const generateMutation = useMutation({
     mutationFn: scheduleService.generateSchedule,
+    onMutate: async () => {
+      // Optimistically clear the schedule from the UI cache
+      await queryClient.cancelQueries({ queryKey: ['schedule'] });
+      queryClient.setQueryData(['schedule'], []);
+    },
     onSuccess: (data) => {
       console.log('[TodayScreen] generateSchedule SUCCESS, items:', data.length);
       queryClient.invalidateQueries({ queryKey: ['schedule'] });

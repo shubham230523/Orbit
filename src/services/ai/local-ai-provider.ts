@@ -88,16 +88,19 @@ export class LocalAIProvider implements AIProvider {
       duration: t.estimatedDuration || 30
     }));
 
-    const rawPrompt = `FAST SCHEDULE from ${new Date().getHours()}:${new Date().getMinutes()} until tomorrow.
+    const rawPrompt = `Generate a realistic daily schedule for today.
+    Current Time: ${new Date().getHours()}:${new Date().getMinutes()}
 
-    TASKS: ${JSON.stringify(simplifiedTasks)}
-    MANDATORY: Sleep, Lunch, Dinner.
+    TASKS (exactly once each): ${JSON.stringify(simplifiedTasks)}
 
-    STRICT CHRONOLOGY:
-    1. Items in order. StartTime of next = EndTime of previous.
-    2. Stay within 00:00 - 23:59. Each Task ID exactly once.
-    3. BE EXTREMELY CONCISE: No 'reason' field. Use short titles.
-    4. Max 10 items total.`;
+    STRICT CONSTRAINTS:
+    - Include exactly 1 Sleep, 1 Breakfast, 1 Lunch, 1 Dinner.
+    - StartTime of next MUST EQUAL EndTime of previous.
+    - Stay within 00:00 to 23:59. STOP at 23:59.
+    - Each Task ID MUST appear exactly ONCE.
+    - MAX 15 total blocks.
+
+    JSON FORMAT: Output ONLY the JSON array inside {"schedule": [...]}. No text.`;
 
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     console.log('[LocalAIProvider] Inference prompt sent');
@@ -128,8 +131,14 @@ export class LocalAIProvider implements AIProvider {
       console.warn('[LocalAIProvider] JSON appears truncated, attempting recovery');
       // Very basic recovery: add missing closing brackets/braces
       cleaned = cleaned.trim();
-      if (!cleaned.endsWith('}')) cleaned += '}]}';
-      else if (!cleaned.endsWith(']')) cleaned += ']}';
+      if (!cleaned.endsWith('}')) {
+        // If it looks like it was in the middle of a schedule item
+        if (cleaned.includes('{') && !cleaned.endsWith('}')) {
+          cleaned += '}]}';
+        } else {
+          cleaned += ']}';
+        }
+      }
     }
 
     return cleaned;

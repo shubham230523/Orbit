@@ -58,9 +58,9 @@ export class AndroidAIAdapter implements PlatformAIAdapter {
       await this.context.completion(
         {
           prompt: fullPrompt,
-          n_predict: 768, // Reduced for speed
+          n_predict: 1536, // Increased to ensure JSON completion
           temperature: 0.0,
-          stop: ['<|im_end|>', '<|endoftext|>'],
+          stop: ['<|im_end|>', '<|endoftext|>', '"startTime": "24:', '"startTime": "25:'], // Hard logic brakes
         },
         (data: any) => {
           resultText += data.token;
