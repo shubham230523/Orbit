@@ -126,15 +126,6 @@ export class LocalAIProvider implements AIProvider {
       return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     };
 
-    // 1. Initial Sleep: 00:00 to 05:00 (5 hours)
-    finalSchedule.push({
-      title: 'Sleep',
-      startTime: '00:00',
-      endTime: '05:00',
-      type: 'BREAK',
-      reason: 'Rest'
-    });
-
     let currentMins = 5 * 60; // 05:00 AM
     let breakfastScheduled = false;
     let lunchScheduled = false;
@@ -275,11 +266,11 @@ export class LocalAIProvider implements AIProvider {
       });
     }
 
-    // 2. Final Sleep: 21:00 to 23:59 (3 hours) -> Total 8 hours of sleep
+    // 2. Final Sleep: 21:00 to 05:00 (8 hours total)
     finalSchedule.push({
       title: 'Sleep',
       startTime: '21:00',
-      endTime: '23:59',
+      endTime: '05:00',
       type: 'BREAK',
       reason: 'Rest'
     });
@@ -291,23 +282,33 @@ export class LocalAIProvider implements AIProvider {
     // 1. Strip markdown code blocks
     let cleaned = text.replace(/```json\n?|```/g, '').trim();
 
-    // 2. Find first '{' and last '}' to isolate the JSON object if model added chatter
     const firstBrace = cleaned.indexOf('{');
+    if (firstBrace === -1) return cleaned;
+
+    // First try standard parsing of the text within first and last braces
     const lastBrace = cleaned.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
-    } else if (firstBrace !== -1 && lastBrace === -1) {
-      console.warn('[LocalAIProvider] JSON appears truncated, attempting recovery');
-      // Very basic recovery: add missing closing brackets/braces
-      cleaned = cleaned.trim();
-      if (!cleaned.endsWith('}')) {
-        // If it looks like it was in the middle of a schedule item
-        if (cleaned.includes('{') && !cleaned.endsWith('}')) {
-          cleaned += '}]}';
-        } else {
-          cleaned += ']}';
-        }
+    if (lastBrace !== -1) {
+      const candidate = cleaned.substring(firstBrace, lastBrace + 1);
+      try {
+        JSON.parse(candidate);
+        return candidate;
+      } catch (e) {}
+    }
+
+    // Comprehensive truncation recovery for array of objects inside JSON
+    let candidate = cleaned.substring(firstBrace);
+    let lastBraceIdx = candidate.lastIndexOf('}');
+    while (lastBraceIdx !== -1) {
+      const sub = candidate.substring(0, lastBraceIdx + 1);
+      for (const closure of ['', ']}', '}', ']', ']]}', '}]\}']) {
+        try {
+          const testStr = sub + closure;
+          JSON.parse(testStr);
+          return testStr;
+        } catch (err) {}
       }
+      candidate = candidate.substring(0, lastBraceIdx);
+      lastBraceIdx = candidate.lastIndexOf('}');
     }
 
     return cleaned;
