@@ -37,7 +37,14 @@ export default function GoalRoadmapScreen() {
     retry: false,
   });
 
+  const { data: existingTasks } = useQuery({
+    queryKey: ['tasks', 'goal', id],
+    queryFn: () => taskService.getTasks(),
+    select: (tasks) => tasks.filter(t => t.goalId === id)
+  });
+
   const [convertingIds, setConvertingIds] = useState<Set<string>>(new Set());
+
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
 
   const generateMutation = useMutation({
@@ -124,16 +131,22 @@ export default function GoalRoadmapScreen() {
       <FlatList
         data={data?.milestones}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <MilestoneCard
-            title={item.title}
-            status={item.status}
-            dueDate={item.dueDate || undefined}
-            onAction={() => convertToTaskMutation.mutate(item)}
-            isActioned={convertedIds.has(item.id)}
-            loading={convertingIds.has(item.id)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const isAlreadyTask = existingTasks?.some(t => t.title.toLowerCase() === item.title.toLowerCase());
+          const isBeingConverted = convertingIds.has(item.id);
+          const isJustConverted = convertedIds.has(item.id);
+
+          return (
+            <MilestoneCard
+              title={item.title}
+              status={item.status}
+              dueDate={item.dueDate || undefined}
+              onAction={() => convertToTaskMutation.mutate(item)}
+              isActioned={isAlreadyTask || isJustConverted}
+              loading={isBeingConverted}
+            />
+          );
+        }}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: Math.max(insets.bottom, 40) + Spacing.four }

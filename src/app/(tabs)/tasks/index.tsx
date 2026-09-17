@@ -101,12 +101,17 @@ export default function TasksScreen() {
           const enhancedTask = {
             ...item,
             status: displayStatus === 'blocked' && item.status !== 'completed' ? 'blocked' : item.status,
-            title: displayStatus === 'blocked' && item.status !== 'completed' ? `${item.title} (Missed)` : item.title
+            displayTitle: displayStatus === 'blocked' && item.status !== 'completed' ? `${item.title} (Missed)` : item.title
           };
+
+          if (__DEV__ && tasks.filter(t => t.id === item.id).length > 1) {
+            console.warn(`Duplicate Task ID detected: ${item.id}`);
+          }
 
           return (
             <TaskCard
-              task={enhancedTask as any}
+              key={`task-${item.id}-${enhancedTask.status}`}
+              task={{ ...enhancedTask, title: enhancedTask.displayTitle } as any}
               onToggleComplete={() => toggleTaskMutation.mutate(item)}
               onDelete={() => deleteTaskMutation.mutate(item.id)}
               style={styles.card}
