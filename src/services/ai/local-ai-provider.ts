@@ -121,7 +121,25 @@ export class LocalAIProvider implements AIProvider {
       console.log('[LocalAIProvider] Inference result raw text length:', result.text.length);
       const cleaned = this.cleanJsonResponse(result.text);
       console.log('[LocalAIProvider] Cleaned JSON:', cleaned);
-      parsed = SchedulerSchema.parse(JSON.parse(cleaned));
+
+      let rawJson = JSON.parse(cleaned);
+
+      // Auto-wrap if AI returns array or single object directly instead of {schedule: []}
+      if (Array.isArray(rawJson)) {
+        rawJson = { schedule: rawJson };
+      } else if (rawJson && typeof rawJson === 'object' && !rawJson.schedule) {
+        rawJson = { schedule: [rawJson] };
+      }
+
+      // Normalize types to uppercase to avoid Zod enum mismatches (e.g. 'Habit' -> 'HABIT')
+      if (rawJson.schedule && Array.isArray(rawJson.schedule)) {
+        rawJson.schedule = rawJson.schedule.map((item: any) => ({
+          ...item,
+          type: typeof item.type === 'string' ? item.type.toUpperCase() : item.type
+        }));
+      }
+
+      parsed = SchedulerSchema.parse(rawJson);
       console.log('[LocalAIProvider] Parsed schedule length:', parsed.schedule.length);
     } catch (e) {
       console.error('[LocalAIProvider] Failed to get or parse AI response, using fallback layout:', e);
