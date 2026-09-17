@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { runQuery, runExecute } from '@/db/client';
 import { ScheduleBlock } from '@/types/domain';
 import { AIProviderFactory } from './ai/ai-provider-factory';
+import { RoutineTimes } from './ai/types';
 import { taskService } from './task-service';
 import { habitService } from './habit-service';
 import { useAuthStore } from '@/store/use-auth-store';
@@ -18,8 +19,12 @@ export const scheduleService = {
     );
   },
 
-  async generateSchedule(params?: { taskIds?: string[]; habitIds?: string[] }): Promise<ScheduleBlock[]> {
-    const { taskIds, habitIds } = params || {};
+  async generateSchedule(params?: {
+    taskIds?: string[];
+    habitIds?: string[];
+    routines?: RoutineTimes
+  }): Promise<ScheduleBlock[]> {
+    const { taskIds, habitIds, routines } = params || {};
     console.log('[ScheduleService] generateSchedule started');
     const userId = useAuthStore.getState().user?.id;
     if (!userId) throw new Error('Not authenticated');
@@ -48,7 +53,7 @@ export const scheduleService = {
     await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
 
     // In local-first, we use the local provider's generation logic
-    const aiResponse = await provider.generateSchedule(tasks, '5 AM to 9 PM', pendingHabits);
+    const aiResponse = await provider.generateSchedule(tasks, 'Dynamic', pendingHabits, routines);
     console.log('[ScheduleService] AI response received. Schedule items:', aiResponse.schedule.length);
 
     const blocks: ScheduleBlock[] = [];

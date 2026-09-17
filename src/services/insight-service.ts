@@ -26,10 +26,12 @@ export const insightService = {
     }
 
     // 1. Task Completion Stats
-    // Tasks don't have userId directly in this schema version, so we fetch all
-    // (since it's a local app with a single primary user)
     const allTasks = await runQuery<{ status: string; actualDuration: number }>(
-      'SELECT status, actualDuration FROM tasks'
+      `SELECT t.status, t.actualDuration
+       FROM tasks t
+       INNER JOIN goals g ON t.goalId = g.id
+       WHERE g.userId = ?`,
+      [userId]
     );
 
     const tasksCompleted = allTasks.filter(t => t.status === 'completed').length;
@@ -75,11 +77,15 @@ export const insightService = {
       const dateStr = format(date, 'yyyy-MM-dd');
       const dayName = format(date, 'EEE');
 
-      // Query completed tasks for this day (requires updatedAt or completedAt)
-      // Since we don't have completedAt, we'll use updatedAt as a proxy for this exercise.
+      // Query completed tasks for this day belonging to the current user
       const count = await runQuery<{ count: number }>(
-        "SELECT COUNT(*) as count FROM tasks WHERE status = 'completed' AND date(updatedAt) = date(?)",
-        [dateStr]
+        `SELECT COUNT(*) as count
+         FROM tasks t
+         INNER JOIN goals g ON t.goalId = g.id
+         WHERE t.status = 'completed'
+         AND date(t.updatedAt) = date(?)
+         AND g.userId = ?`,
+        [dateStr, userId]
       );
 
       weeklyActivity.push({

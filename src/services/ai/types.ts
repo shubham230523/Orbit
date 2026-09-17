@@ -60,13 +60,25 @@ export interface SchedulerAIResponse {
   schedule: ScheduledTask[];
 }
 
+export interface RoutineTimes {
+  sleepStart: string;
+  breakfastStart: string;
+  lunchStart: string;
+  dinnerStart: string;
+}
+
 export interface AIProvider {
   getType(): AIProviderType;
   getStatus(): LocalModelStatus | 'ONLINE';
   initialize(): Promise<void>;
   generateRoadmap(goalTitle: string, goalDescription?: string): Promise<RoadmapAIResponse>;
   analyzeGoal(goalTitle: string, targetDate?: string): Promise<GoalAnalysisAIResponse>;
-  generateSchedule(tasks: Task[], availability: string, habits?: Habit[]): Promise<SchedulerAIResponse>;
+  generateSchedule(
+    tasks: Task[],
+    availability: string,
+    habits?: Habit[],
+    routines?: RoutineTimes
+  ): Promise<SchedulerAIResponse>;
   chat(message: string, context?: any): Promise<string>;
   research(topic: string): Promise<any>;
   cancel(): void;

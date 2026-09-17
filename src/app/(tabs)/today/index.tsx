@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, StyleSheet, View, Pressable } from 'react-native';
+import { FlatList, StyleSheet, View, Pressable, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scheduleService } from '@/services/schedule-service';
 import { Screen } from '@/components/ui/screen';
@@ -10,15 +10,14 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Modal } from '@/components/ui/modal';
-import { Spacing } from '@/constants/theme';
-import { Calendar, Sparkles } from 'lucide-react-native';
+import { Spacing, Radius } from '@/constants/theme';
+import { Calendar, Sparkles, AlarmClock, AlarmClockOff } from 'lucide-react-native';
 import { formatTime12h } from '@/utils/date';
 import { taskService } from '@/services/task-service';
 import { habitService } from '@/services/habit-service';
 import { format } from 'date-fns';
 import { PlannerSelectionModal } from '@/components/planner-selection-modal';
 import { notificationService } from '@/services/notification-service';
-import { Bell, BellOff } from 'lucide-react-native';
 
 export default function TodayScreen() {
   const queryClient = useQueryClient();
@@ -74,6 +73,15 @@ export default function TodayScreen() {
 
   const toggleReminderMutation = useMutation({
     mutationFn: async (block: any) => {
+      if (!notificationsAvailable) {
+        Alert.alert(
+          "Reminders Unavailable",
+          "The notification module is missing from this build. Please run 'npx expo run:android' to rebuild the app with notification support.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+
       if (block.reminderEnabled) {
         if (block.reminderId) await notificationService.cancelReminder(block.reminderId);
         return scheduleService.updateReminder(block.id, null, false);
@@ -128,18 +136,6 @@ export default function TodayScreen() {
         />
       </View>
 
-      <PlannerSelectionModal
-        visible={isSelectionModalVisible}
-        onClose={() => setSelectionModalVisible(false)}
-        tasks={tasks?.filter(t => t.status !== 'completed') || []}
-        habits={habits?.filter(h => !h.completed) || []}
-        loading={generateMutation.isPending}
-        onConfirm={(taskIds, habitIds) => {
-          generateMutation.mutate({ taskIds, habitIds });
-          setSelectionModalVisible(false);
-        }}
-      />
-
       <FlatList
         data={schedule}
         keyExtractor={(item) => item.id}
@@ -178,17 +174,22 @@ export default function TodayScreen() {
                   )}
                 </View>
 
-                {(item.type === 'TASK' || item.type === 'HABIT') && !isCompleted && !isPast && notificationsAvailable && (
-                  <Pressable
-                    onPress={() => toggleReminderMutation.mutate(item)}
-                    style={styles.reminderButton}
-                  >
-                    {item.reminderEnabled ? (
-                      <Bell size={20} color="#208AEF" />
-                    ) : (
-                      <BellOff size={20} color="#ccc" />
-                    )}
-                  </Pressable>
+                {/* Show reminder action for any block that is not Sleep and not already past/done */}
+                {item.title !== 'Sleep' && !isCompleted && !isPast && (
+                  <View style={styles.reminderActionContainer}>
+                    <Button
+                      title={item.reminderEnabled ? "Remove" : "Remind"}
+                      variant={item.reminderEnabled ? "primary" : "outline"}
+                      size="small"
+                      onPress={() => toggleReminderMutation.mutate(item)}
+                      icon={item.reminderEnabled
+                        ? <AlarmClock size={14} color="#fff" />
+                        : <AlarmClock size={14} color="#208AEF" />
+                      }
+                      style={styles.reminderButtonCompact}
+                      textStyle={item.reminderEnabled ? { color: "#fff" } : { color: "#208AEF" }}
+                    />
+                  </View>
                 )}
               </View>
             </Card>
@@ -205,6 +206,18 @@ export default function TodayScreen() {
           styles.listContent,
           { paddingBottom: 100 } // Safe padding for bottom tab bar and nav
         ]}
+      />
+
+      <PlannerSelectionModal
+        visible={isSelectionModalVisible}
+        onClose={() => setSelectionModalVisible(false)}
+        tasks={tasks?.filter(t => t.status !== 'completed') || []}
+        habits={habits?.filter(h => !h.completed) || []}
+        loading={generateMutation.isPending}
+        onConfirm={(taskIds, habitIds, routines) => {
+          generateMutation.mutate({ taskIds, habitIds, routines });
+          setSelectionModalVisible(false);
+        }}
       />
 
       <Modal
@@ -245,9 +258,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  reminderButton: {
-    padding: Spacing.two,
+  reminderActionContainer: {
     justifyContent: 'center',
+    alignItems: 'flex-end',
+    minWidth: 80,
+  },
+  reminderButtonCompact: {
+    minHeight: 32,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Radius.full,
   },
   completedBlockCard: {
     backgroundColor: '#E8F5E9',

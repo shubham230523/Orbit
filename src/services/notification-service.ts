@@ -4,21 +4,11 @@ import { subMinutes, set, format } from 'date-fns';
 
 let isHandlerSet = false;
 
-// Extremely defensive module retrieval to prevent fatal native crashes
+// Defensive module retrieval
 const getNotificationsModule = () => {
   if (Platform.OS === 'web') return null;
 
   try {
-    // Check if the native module exists in NativeModules before attempting to require the JS wrapper
-    // ExpoPushTokenManager is the one throwing the error in the logs
-    const hasNativeModule = !!NativeModules.ExpoPushTokenManager ||
-                           !!NativeModules.Notifications ||
-                           !!NativeModules.ExpoNotificationCenter;
-
-    if (!hasNativeModule) {
-      return null;
-    }
-
     return require('expo-notifications');
   } catch (e) {
     return null;
