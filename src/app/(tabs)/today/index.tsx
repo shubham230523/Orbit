@@ -12,7 +12,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Modal } from '@/components/ui/modal';
 import { Spacing } from '@/constants/theme';
 import { Calendar, Sparkles } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatTime12h } from '@/utils/date';
 import { taskService } from '@/services/task-service';
 import { habitService } from '@/services/habit-service';
@@ -78,8 +77,6 @@ export default function TodayScreen() {
     // Effectively, at 7:53 AM, it's future relative to tonight.
     return current >= end && current < start && current < '05:00';
   };
-
-  const insets = useSafeAreaInsets();
 
   return (
     <Screen scrollable={false}>
@@ -151,7 +148,7 @@ export default function TodayScreen() {
         }
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: Math.max(insets.bottom, 40) }
+          { paddingBottom: 100 } // Safe padding for bottom tab bar and nav
         ]}
       />
 

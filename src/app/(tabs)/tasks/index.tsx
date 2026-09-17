@@ -17,7 +17,6 @@ import { Spacing, Radius } from '@/constants/theme';
 import { generateId } from '@/utils/id';
 import { useAuthStore } from '@/store/use-auth-store';
 import { toISO } from '@/utils/date';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TasksScreen() {
   const queryClient = useQueryClient();
@@ -35,7 +34,7 @@ export default function TasksScreen() {
     queryFn: scheduleService.getSchedule,
   });
 
-  const insets = useSafeAreaInsets();
+
 
   const createTaskMutation = useMutation({
     mutationFn: taskService.createTask,
@@ -130,7 +129,7 @@ export default function TasksScreen() {
         contentContainerStyle={[
           styles.listContent,
           tasks?.length === 0 && { flex: 1 },
-          { paddingBottom: insets.bottom + 100 }
+          { paddingBottom: 100 }
         ]}
       />
 

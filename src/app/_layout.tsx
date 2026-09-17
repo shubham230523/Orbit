@@ -12,7 +12,7 @@ import { useAIStore } from '@/store/use-ai-store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
 import { getDb } from '@/db/client';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
 const queryClient = new QueryClient();
 
@@ -89,15 +89,15 @@ export default function RootLayout() {
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider value={customTheme}>
             <StatusBar style={isDark ? 'light' : 'dark'} translucent={false} backgroundColor={customTheme.colors.background} />
             <Stack screenOptions={{ headerShown: false }} />
           </ThemeProvider>
         </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
