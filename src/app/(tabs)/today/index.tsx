@@ -58,6 +58,18 @@ export default function TodayScreen() {
   const now = new Date();
   const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
+  // Helper to determine if a time block is in the past, accounting for midnight crossover (Sleep)
+  const checkIfPast = (start: string, end: string, current: string) => {
+    if (start < end) {
+      return current >= end;
+    }
+    // Crossover case (e.g., 21:00 - 05:00)
+    // In our 5 AM start cycle, this is only "past" if we've passed the end time (5 AM)
+    // but haven't reached the start time (9 PM) AND we consider the very early morning window.
+    // Effectively, at 7:53 AM, it's future relative to tonight.
+    return current >= end && current < start && current < '05:00';
+  };
+
   return (
     <Screen scrollable={false}>
       <View style={styles.header}>
@@ -86,18 +98,26 @@ export default function TodayScreen() {
           const associatedTask = item.taskId && tasks ? tasks.find(t => t.id === item.taskId) : null;
           const isTaskCompleted = associatedTask ? associatedTask.status === 'completed' : false;
 
-          // Determine if missed: if current day time is greater than task end time (or start time if no duration) and not completed
-          const isMissed = item.type === 'TASK' && !isTaskCompleted && item.endTime < currentHHMM;
+          // Determine if past using helper logic
+          const isPast = checkIfPast(item.startTime, item.endTime, currentHHMM);
+
+          // Determine if missed: if it's a TASK that is past and NOT completed
+          const isMissed = item.type === 'TASK' && isPast && !isTaskCompleted;
 
           return (
-            <Card style={[styles.blockCard, isTaskCompleted && styles.completedBlockCard, isMissed && styles.missedBlockCard]}>
+            <Card style={[
+              styles.blockCard,
+              isTaskCompleted && styles.completedBlockCard,
+              isMissed && styles.missedBlockCard,
+              (isPast && !isMissed && !isTaskCompleted) && styles.pastBlockCard
+            ]}>
               <View style={styles.blockContent}>
                 <View style={styles.timeColumn}>
-                  <ThemedText type="small" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.startTime)}</ThemedText>
-                  <ThemedText type="small" style={[{ opacity: 0.5 }, isTaskCompleted && styles.completedText, isMissed && styles.missedText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.endTime)}</ThemedText>
+                  <ThemedText type="small" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isTaskCompleted) && styles.pastText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.startTime)}</ThemedText>
+                  <ThemedText type="small" style={[{ opacity: 0.5 }, isTaskCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isTaskCompleted) && styles.pastText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.endTime)}</ThemedText>
                 </View>
                 <View style={styles.titleColumn}>
-                  <ThemedText type="bodyBold" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText]}>{item.title}</ThemedText>
+                  <ThemedText type="bodyBold" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isTaskCompleted) && styles.pastText]}>{item.title}</ThemedText>
                   {isTaskCompleted && (
                     <ThemedText type="small" style={styles.badgeCompleted}>✓ Done</ThemedText>
                   )}
@@ -163,8 +183,14 @@ const styles = StyleSheet.create({
     borderColor: '#C8E6C9',
   },
   missedBlockCard: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#FFCDD2',
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
+    opacity: 0.6,
+  },
+  pastBlockCard: {
+    backgroundColor: '#FAFAFA',
+    borderColor: '#EEEEEE',
+    opacity: 0.5,
   },
   completedText: {
     textDecorationLine: 'line-through',
@@ -172,8 +198,11 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   missedText: {
-    color: '#D32F2F',
-    opacity: 0.8,
+    color: '#757575',
+    textDecorationLine: 'line-through',
+  },
+  pastText: {
+    color: '#9E9E9E',
   },
   badgeCompleted: {
     color: '#2E7D32',
@@ -181,7 +210,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   badgeMissed: {
-    color: '#C62828',
+    color: '#757575',
     fontWeight: 'bold',
     marginTop: 2,
   },

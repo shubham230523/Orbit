@@ -40,7 +40,7 @@ export const TaskCard = ({ task, onPress, onToggleComplete }: TaskCardProps) => 
                 styles.title,
                 { color: colors.text },
                 task.status === 'completed' && styles.completedText,
-                task.status === 'blocked' && { color: '#C62828', textDecorationLine: 'none' }
+                task.status === 'blocked' && { color: '#9E9E9E', textDecorationLine: 'line-through', opacity: 0.6 }
               ]}
               numberOfLines={2}
             >

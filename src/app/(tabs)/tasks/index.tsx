@@ -76,7 +76,13 @@ export default function TasksScreen() {
           if (associatedBlock && item.status !== 'completed') {
             const now = new Date();
             const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            if (associatedBlock.endTime < currentHHMM) {
+
+            // Reusing logic: Past if current >= end (normal) or special crossover rule
+            const isBlockPast = associatedBlock.startTime < associatedBlock.endTime
+              ? currentHHMM >= associatedBlock.endTime
+              : (currentHHMM >= associatedBlock.endTime && currentHHMM < associatedBlock.startTime && currentHHMM < '05:00');
+
+            if (isBlockPast) {
               displayStatus = 'blocked'; // Use blocked status or represent visually as missed
             }
           }
