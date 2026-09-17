@@ -44,23 +44,27 @@ export const scheduleService = {
 
     const blocks: ScheduleBlock[] = [];
     for (const item of aiResponse.schedule) {
+      const isTask = item.taskId && tasks.some(t => t.id === item.taskId);
+      const isHabit = item.taskId && pendingHabits.some(h => h.id === item.taskId);
+
       const taskTitle = item.taskId ? (tasks.find(t => t.id === item.taskId)?.title || pendingHabits.find(h => h.id === item.taskId)?.title) : undefined;
 
 
       const block: ScheduleBlock = {
         id: uuidv4(),
         userId,
-        taskId: item.taskId,
+        taskId: isTask ? item.taskId : undefined,
+        habitId: isHabit ? item.taskId : undefined,
         title: taskTitle || item.title || 'Scheduled Item',
         startTime: item.startTime,
         endTime: item.endTime,
-        type: item.type || (item.taskId ? 'TASK' : 'EVENT'),
+        type: (item.type as any) || (isHabit ? 'HABIT' : (isTask ? 'TASK' : 'EVENT')),
       };
 
       await runExecute(
-        `INSERT INTO schedule_blocks (id, userId, taskId, title, startTime, endTime, type)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [block.id, block.userId, block.taskId || null, block.title, block.startTime, block.endTime, block.type]
+        `INSERT INTO schedule_blocks (id, userId, taskId, habitId, title, startTime, endTime, type)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [block.id, block.userId, block.taskId || null, block.habitId || null, block.title, block.startTime, block.endTime, block.type]
       );
       blocks.push(block);
     }

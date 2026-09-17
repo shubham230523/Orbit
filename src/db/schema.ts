@@ -73,11 +73,13 @@ export const SCHEMA = `
     id TEXT PRIMARY KEY,
     userId TEXT NOT NULL,
     taskId TEXT,
+    habitId TEXT,
     title TEXT NOT NULL,
     startTime TEXT NOT NULL,
     endTime TEXT NOT NULL,
     type TEXT DEFAULT 'TASK',
     FOREIGN KEY (userId) REFERENCES users(id),
-    FOREIGN KEY (taskId) REFERENCES tasks(id)
+    FOREIGN KEY (taskId) REFERENCES tasks(id),
+    FOREIGN KEY (habitId) REFERENCES habits(id)
   );
 `;

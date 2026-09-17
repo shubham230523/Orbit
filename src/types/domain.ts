@@ -36,10 +36,11 @@ export interface ScheduleBlock {
   id: string;
   userId: string;
   taskId?: string;
+  habitId?: string;
   title: string;
   startTime: string;
   endTime: string;
-  type: 'TASK' | 'EVENT' | 'FOCUS' | 'BREAK';
+  type: 'TASK' | 'EVENT' | 'FOCUS' | 'BREAK' | 'HABIT';
 }
 
 export interface Habit {

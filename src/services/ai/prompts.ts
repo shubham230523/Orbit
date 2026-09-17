@@ -29,7 +29,7 @@ export const SchedulerSchema = z.object({
       title: z.string().optional(),
       startTime: z.string(),
       endTime: z.string(),
-      type: z.enum(['TASK', 'EVENT', 'FOCUS', 'BREAK']).optional().default('TASK'),
+      type: z.enum(['TASK', 'EVENT', 'FOCUS', 'BREAK', 'HABIT']).optional().default('TASK'),
       reason: z.string().optional(),
     }),
   ),

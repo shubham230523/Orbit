@@ -14,9 +14,12 @@ import { Spacing } from '@/constants/theme';
 import { Calendar, Sparkles } from 'lucide-react-native';
 import { formatTime12h } from '@/utils/date';
 import { taskService } from '@/services/task-service';
+import { habitService } from '@/services/habit-service';
+import { format } from 'date-fns';
 
 export default function TodayScreen() {
   const queryClient = useQueryClient();
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const { data: schedule, isLoading: isScheduleLoading, isError: isScheduleError, error: scheduleError, refetch: refetchSchedule } = useQuery({
     queryKey: ['schedule'],
@@ -26,6 +29,11 @@ export default function TodayScreen() {
   const { data: tasks, isLoading: isTasksLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: taskService.getTasks,
+  });
+
+  const { data: habits, isLoading: isHabitsLoading } = useQuery({
+    queryKey: ['habits', todayStr],
+    queryFn: () => habitService.getHabitsWithStatus(todayStr),
   });
 
   const generateMutation = useMutation({
@@ -51,7 +59,7 @@ export default function TodayScreen() {
     },
   });
 
-  if (isScheduleLoading || isTasksLoading) return <LoadingState />;
+  if (isScheduleLoading || isTasksLoading || isHabitsLoading) return <LoadingState />;
   if (isScheduleError) return <ErrorState message={scheduleError.message} onRetry={refetchSchedule} />;
 
   // Get current HH:MM string for comparison
@@ -94,31 +102,33 @@ export default function TodayScreen() {
         data={schedule}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
-          // Check associated task state
+          // Check associated task or habit state
           const associatedTask = item.taskId && tasks ? tasks.find(t => t.id === item.taskId) : null;
-          const isTaskCompleted = associatedTask ? associatedTask.status === 'completed' : false;
+          const associatedHabit = item.habitId && habits ? habits.find(h => h.id === item.habitId) : null;
+
+          const isCompleted = associatedTask ? associatedTask.status === 'completed' : (associatedHabit ? associatedHabit.completed : false);
 
           // Determine if past using helper logic
           const isPast = checkIfPast(item.startTime, item.endTime, currentHHMM);
 
-          // Determine if missed: if it's a TASK that is past and NOT completed
-          const isMissed = item.type === 'TASK' && isPast && !isTaskCompleted;
+          // Determine if missed: if it's a TASK/HABIT that is past and NOT completed
+          const isMissed = (item.type === 'TASK' || item.type === 'HABIT') && isPast && !isCompleted;
 
           return (
             <Card style={[
               styles.blockCard,
-              isTaskCompleted && styles.completedBlockCard,
+              isCompleted && styles.completedBlockCard,
               isMissed && styles.missedBlockCard,
-              (isPast && !isMissed && !isTaskCompleted) && styles.pastBlockCard
+              (isPast && !isMissed && !isCompleted) && styles.pastBlockCard
             ]}>
               <View style={styles.blockContent}>
                 <View style={styles.timeColumn}>
-                  <ThemedText type="small" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isTaskCompleted) && styles.pastText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.startTime)}</ThemedText>
-                  <ThemedText type="small" style={[{ opacity: 0.5 }, isTaskCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isTaskCompleted) && styles.pastText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.endTime)}</ThemedText>
+                  <ThemedText type="small" style={[isCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isCompleted) && styles.pastText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.startTime)}</ThemedText>
+                  <ThemedText type="small" style={[{ opacity: 0.5 }, isCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isCompleted) && styles.pastText]} numberOfLines={1} adjustsFontSizeToFit>{formatTime12h(item.endTime)}</ThemedText>
                 </View>
                 <View style={styles.titleColumn}>
-                  <ThemedText type="bodyBold" style={[isTaskCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isTaskCompleted) && styles.pastText]}>{item.title}</ThemedText>
-                  {isTaskCompleted && (
+                  <ThemedText type="bodyBold" style={[isCompleted && styles.completedText, isMissed && styles.missedText, (isPast && !isMissed && !isCompleted) && styles.pastText]}>{item.title}</ThemedText>
+                  {isCompleted && (
                     <ThemedText type="small" style={styles.badgeCompleted}>✓ Done</ThemedText>
                   )}
                   {isMissed && (
