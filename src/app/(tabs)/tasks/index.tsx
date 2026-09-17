@@ -16,6 +16,7 @@ import { Spacing, Radius } from '@/constants/theme';
 import { generateId } from '@/utils/id';
 import { useAuthStore } from '@/store/use-auth-store';
 import { toISO } from '@/utils/date';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TasksScreen() {
   const queryClient = useQueryClient();
@@ -27,6 +28,8 @@ export default function TasksScreen() {
     queryKey: ['tasks'],
     queryFn: taskService.getTasks,
   });
+
+  const insets = useSafeAreaInsets();
 
   const createTaskMutation = useMutation({
     mutationFn: taskService.createTask,
@@ -108,7 +111,11 @@ export default function TasksScreen() {
             style={{ flex: 1 }}
           />
         }
-        contentContainerStyle={[styles.listContent, tasks?.length === 0 && { flex: 1 }]}
+        contentContainerStyle={[
+          styles.listContent,
+          tasks?.length === 0 && { flex: 1 },
+          { paddingBottom: insets.bottom + 100 }
+        ]}
       />
 
       <Button
@@ -145,7 +152,6 @@ export default function TasksScreen() {
 
 const styles = StyleSheet.create({
   listContent: {
-    paddingBottom: 120,
     paddingHorizontal: Spacing.two,
     gap: Spacing.three,
     flexGrow: 1,

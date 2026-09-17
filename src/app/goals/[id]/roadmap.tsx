@@ -12,6 +12,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Spacing } from '@/constants/theme';
 import { Sparkles } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AIProviderFactory } from '@/services/ai/ai-provider-factory';
 import { taskService } from '@/services/task-service';
@@ -111,6 +112,8 @@ export default function GoalRoadmapScreen() {
     return <ErrorState message={error?.message || 'Error'} onRetry={refetch} />;
   }
 
+  const insets = useSafeAreaInsets();
+
   return (
     <Screen scrollable={false}>
       <View style={styles.goalHeader}>
@@ -131,7 +134,10 @@ export default function GoalRoadmapScreen() {
             loading={convertingIds.has(item.id)}
           />
         )}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: Math.max(insets.bottom, 40) + Spacing.four }
+        ]}
       />
     </Screen>
   );
@@ -152,7 +158,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     gap: Spacing.three,
-    paddingBottom: 40,
     paddingHorizontal: Spacing.four,
   },
   generateButton: {
