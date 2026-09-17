@@ -79,14 +79,15 @@ describe('LocalAIProvider', () => {
   });
 
   it('generates schedule correctly', async () => {
+    const mockTasks = [{ id: '1', title: 'Work', estimatedDuration: 60 }];
     mockAdapter.infer.mockResolvedValueOnce({
       text: JSON.stringify({
-        schedule: [{ taskId: '1', startTime: '09:00', endTime: '10:00', reason: 'Focus' }]
+        schedule: [{ taskId: '1', startTime: '05:00', endTime: '06:00', reason: 'Focus' }]
       }),
       tokensPerSecond: 10
     });
     await provider.initialize();
-    const result = await provider.generateSchedule([], '5-21');
+    const result = await provider.generateSchedule(mockTasks, '5-21');
     expect(result.schedule[0].taskId).toBe('1');
     expect(result.schedule[0].reason).toBe('Focus');
   });

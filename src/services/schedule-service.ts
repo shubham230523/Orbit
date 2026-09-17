@@ -3,7 +3,9 @@ import { runQuery, runExecute } from '@/db/client';
 import { ScheduleBlock } from '@/types/domain';
 import { AIProviderFactory } from './ai/ai-provider-factory';
 import { taskService } from './task-service';
+import { habitService } from './habit-service';
 import { useAuthStore } from '@/store/use-auth-store';
+import { format } from 'date-fns';
 
 export const scheduleService = {
   async getSchedule(): Promise<ScheduleBlock[]> {
@@ -27,17 +29,23 @@ export const scheduleService = {
     const tasks = await taskService.getTasks();
     console.log('[ScheduleService] Found', tasks.length, 'tasks to schedule');
 
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const habits = await habitService.getHabitsWithStatus(todayStr);
+    const pendingHabits = habits.filter(h => !h.completed);
+    console.log('[ScheduleService] Found', pendingHabits.length, 'pending habits to schedule');
+
     // Clear existing schedule for today immediately to ensure a fresh start
     console.log('[ScheduleService] Clearing existing schedule for user:', userId);
     await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
 
     // In local-first, we use the local provider's generation logic
-    const aiResponse = await provider.generateSchedule(tasks, '5 AM to 9 PM');
+    const aiResponse = await provider.generateSchedule(tasks, '5 AM to 9 PM', pendingHabits);
     console.log('[ScheduleService] AI response received. Schedule items:', aiResponse.schedule.length);
 
     const blocks: ScheduleBlock[] = [];
     for (const item of aiResponse.schedule) {
-      const taskTitle = item.taskId ? tasks.find(t => t.id === item.taskId)?.title : undefined;
+      const taskTitle = item.taskId ? (tasks.find(t => t.id === item.taskId)?.title || pendingHabits.find(h => h.id === item.taskId)?.title) : undefined;
+
 
       const block: ScheduleBlock = {
         id: uuidv4(),

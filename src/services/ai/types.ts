@@ -1,4 +1,4 @@
-import { Task } from '@/types/domain';
+import { Task, Habit } from '@/types/domain';
 
 export enum AIProviderType {
   LOCAL = 'LOCAL',
@@ -66,7 +66,7 @@ export interface AIProvider {
   initialize(): Promise<void>;
   generateRoadmap(goalTitle: string, goalDescription?: string): Promise<RoadmapAIResponse>;
   analyzeGoal(goalTitle: string, targetDate?: string): Promise<GoalAnalysisAIResponse>;
-  generateSchedule(tasks: Task[], availability: string): Promise<SchedulerAIResponse>;
+  generateSchedule(tasks: Task[], availability: string, habits?: Habit[]): Promise<SchedulerAIResponse>;
   chat(message: string, context?: any): Promise<string>;
   research(topic: string): Promise<any>;
   cancel(): void;

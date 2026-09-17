@@ -2,6 +2,7 @@ import { scheduleService } from '../schedule-service';
 import { runQuery, runExecute } from '@/db/client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { taskService } from '../task-service';
+import { habitService } from '../habit-service';
 import { AIProviderFactory } from '../ai/ai-provider-factory';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -19,6 +20,12 @@ jest.mock('@/store/use-auth-store', () => ({
 jest.mock('../task-service', () => ({
   taskService: {
     getTasks: jest.fn(),
+  },
+}));
+
+jest.mock('../habit-service', () => ({
+  habitService: {
+    getHabitsWithStatus: jest.fn(),
   },
 }));
 
@@ -47,6 +54,7 @@ describe('ScheduleService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useAuthStore.getState as jest.Mock).mockReturnValue({ user: mockUser });
+    (habitService.getHabitsWithStatus as jest.Mock).mockResolvedValue([]);
   });
 
   it('gets schedule blocks for the user', async () => {
@@ -75,6 +83,7 @@ describe('ScheduleService', () => {
     };
 
     (taskService.getTasks as jest.Mock).mockResolvedValue(mockTasks);
+    (habitService.getHabitsWithStatus as jest.Mock).mockResolvedValue([]);
     (AIProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
     (uuidv4 as jest.Mock).mockReturnValue('new-block-uuid');
 

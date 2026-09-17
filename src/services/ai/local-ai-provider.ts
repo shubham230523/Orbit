@@ -79,8 +79,8 @@ export class LocalAIProvider implements AIProvider {
     return GoalAnalysisSchema.parse(JSON.parse(cleaned));
   }
 
-  async generateSchedule(tasks: any[], availability: string): Promise<SchedulerAIResponse> {
-    console.log('[LocalAIProvider] generateSchedule called with', tasks.length, 'tasks');
+  async generateSchedule(tasks: any[], availability: string, habits?: any[]): Promise<SchedulerAIResponse> {
+    console.log('[LocalAIProvider] generateSchedule called with', tasks.length, 'tasks and', habits?.length || 0, 'habits');
 
     // Simplify task data to save tokens and improve reliability
     const simplifiedTasks = tasks.map(t => ({
@@ -90,14 +90,22 @@ export class LocalAIProvider implements AIProvider {
       duration: t.estimatedDuration || 60
     }));
 
+    const simplifiedHabits = habits?.map(h => ({
+      id: h.id,
+      title: h.title,
+      duration: 15 // Default 15 mins for habits
+    })) || [];
+
     const rawPrompt = `Generate a realistic daily schedule for today.
     The active day MUST start at 05:00 AM.
 
-    TASKS TO ORDER/SCHEDULE (Schedule each exactly once): ${JSON.stringify(simplifiedTasks)}
+    TASKS TO ORDER/SCHEDULE: ${JSON.stringify(simplifiedTasks)}
+    HABITS TO INCLUDE: ${JSON.stringify(simplifiedHabits)}
 
     STRICT CONSTRAINTS:
-    - Order these tasks logically through the day starting from 05:00 AM.
-    - Do NOT assign the same startTime and endTime to every task. Time must advance chronologically for each item.
+    - Order tasks and habits logically through the day starting from 05:00 AM.
+    - Each Task and Habit MUST appear exactly once if it fits.
+    - Do NOT assign the same startTime and endTime to items. Time must advance chronologically.
     - Sleep must total 8 hours.
     - Include Breakfast, Lunch, and Dinner at appropriate times.
     - Include 10-minute breaks after tasks.
@@ -133,26 +141,41 @@ export class LocalAIProvider implements AIProvider {
     let lunchScheduled = false;
     let dinnerScheduled = false;
 
-    // Gather unique tasks in the order proposed by the AI, or original order if AI failed
-    let orderedTasks: any[] = [];
+    // Gather unique tasks and habits in the order proposed by the AI, or original order if AI failed
+    let orderedItems: any[] = [];
     if (parsed && parsed.schedule && Array.isArray(parsed.schedule)) {
-      const seenTaskIds = new Set<string>();
+      const seenIds = new Set<string>();
       for (const item of parsed.schedule) {
         if (item.taskId) {
-          if (!seenTaskIds.has(item.taskId)) {
-            seenTaskIds.add(item.taskId);
-            const orig = tasks.find(t => t.id === item.taskId);
-            orderedTasks.push({
-              id: item.taskId,
-              title: orig?.title || item.title || 'Task',
-              duration: orig?.estimatedDuration || 60,
-              reason: item.reason
-            });
+          if (!seenIds.has(item.taskId)) {
+            seenIds.add(item.taskId);
+            // Check if it's a task or a habit
+            const origTask = tasks.find(t => t.id === item.taskId);
+            const origHabit = habits?.find(h => h.id === item.taskId);
+
+            if (origTask) {
+              orderedItems.push({
+                id: item.taskId,
+                title: origTask.title,
+                duration: origTask.estimatedDuration || 60,
+                type: 'TASK',
+                reason: item.reason
+              });
+            } else if (origHabit) {
+              orderedItems.push({
+                id: item.taskId,
+                title: origHabit.title,
+                duration: 15,
+                type: 'EVENT',
+                reason: item.reason
+              });
+            }
           }
         } else if (item.title && (item.type === 'TASK' || !item.type)) {
-          orderedTasks.push({
+          orderedItems.push({
             title: item.title,
             duration: 60,
+            type: 'TASK',
             reason: item.reason
           });
         }
@@ -160,16 +183,25 @@ export class LocalAIProvider implements AIProvider {
     }
 
     // Fallback/Union with any tasks that weren't included
-    if (orderedTasks.length === 0) {
-      orderedTasks = tasks.map(t => ({
-        id: t.id,
-        title: t.title,
-        duration: t.estimatedDuration || 60
-      }));
+    if (orderedItems.length === 0) {
+      orderedItems = [
+        ...tasks.map(t => ({
+          id: t.id,
+          title: t.title,
+          duration: t.estimatedDuration || 60,
+          type: 'TASK'
+        })),
+        ...(habits?.map(h => ({
+          id: h.id,
+          title: h.title,
+          duration: 15,
+          type: 'EVENT'
+        })) || [])
+      ];
     }
 
     // Allocate tasks and events into the waking hours window (05:00 to 21:00)
-    for (const task of orderedTasks) {
+    for (const item of orderedItems) {
       // Breakfast around 07:00 AM onwards
       if (!breakfastScheduled && currentMins >= 7 * 60) {
         if (currentMins + 30 <= 21 * 60) {
@@ -215,15 +247,15 @@ export class LocalAIProvider implements AIProvider {
         }
       }
 
-      const duration = task.duration || 60;
+      const duration = item.duration || 60;
       if (currentMins + duration <= 21 * 60) {
         finalSchedule.push({
-          taskId: task.id,
-          title: task.title,
+          taskId: item.id,
+          title: item.title,
           startTime: toHHMM(currentMins),
           endTime: toHHMM(currentMins + duration),
-          type: 'TASK',
-          reason: task.reason
+          type: item.type || 'TASK',
+          reason: item.reason
         });
         currentMins += duration;
 

@@ -32,7 +32,7 @@ export class RemoteAIProvider implements AIProvider {
     return response.data;
   }
 
-  async generateSchedule(tasks: any[], availability: string): Promise<SchedulerAIResponse> {
+  async generateSchedule(tasks: any[], availability: string, habits?: any[]): Promise<SchedulerAIResponse> {
     throw new Error('RemoteAIProvider delegates scheduling to backend service.');
   }
 
