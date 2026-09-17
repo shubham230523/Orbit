@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { CheckCircle2, Circle, Clock } from 'lucide-react-native';
+import { CheckCircle2, Circle, Clock, Trash2 } from 'lucide-react-native';
 import { Task } from '@/types/domain';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing, Typography } from '@/constants/theme';
@@ -10,9 +10,10 @@ export interface TaskCardProps {
   task: Task & { goalTitle?: string };
   onPress?: () => void;
   onToggleComplete?: () => void;
+  onDelete?: () => void;
 }
 
-export const TaskCard = ({ task, onPress, onToggleComplete }: TaskCardProps) => {
+export const TaskCard = ({ task, onPress, onToggleComplete, onDelete }: TaskCardProps) => {
   const colors = useTheme();
 
   return (
@@ -58,6 +59,12 @@ export const TaskCard = ({ task, onPress, onToggleComplete }: TaskCardProps) => 
               </View>
             )}
           </View>
+
+          {onDelete && (
+            <Pressable onPress={onDelete} hitSlop={10}>
+              <Trash2 size={20} color="#D32F2F" opacity={0.6} />
+            </Pressable>
+          )}
         </View>
       </Pressable>
     </Card>

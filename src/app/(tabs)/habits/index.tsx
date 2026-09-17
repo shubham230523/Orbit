@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, Pressable } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react-native';
+import { Plus, Trash2 } from 'lucide-react-native';
 import { habitService } from '@/services/habit-service';
 import { Screen } from '@/components/ui/screen';
 import { ThemedText } from '@/components/themed-text';
@@ -48,6 +48,14 @@ export default function HabitsScreen() {
     },
   });
 
+  const deleteHabitMutation = useMutation({
+    mutationFn: habitService.deleteHabit,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['habits'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+    },
+  });
+
   const handleCreateHabit = () => {
     if (!newHabitTitle.trim() || !user) return;
 
@@ -70,11 +78,17 @@ export default function HabitsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card style={styles.habitCard}>
-            <Checkbox
-              checked={item.completed}
-              onValueChange={(val) => logHabitMutation.mutate({ habitId: item.id, completed: val })}
-              label={item.title}
-            />
+            <View style={styles.habitRow}>
+              <Checkbox
+                checked={item.completed}
+                onValueChange={(val) => logHabitMutation.mutate({ habitId: item.id, completed: val })}
+                label={item.title}
+                style={{ flex: 1 }}
+              />
+              <Pressable onPress={() => deleteHabitMutation.mutate(item.id)} hitSlop={10}>
+                <Trash2 size={20} color="#D32F2F" opacity={0.6} />
+              </Pressable>
+            </View>
           </Card>
         )}
         ListEmptyComponent={
@@ -128,6 +142,12 @@ const styles = StyleSheet.create({
   },
   habitCard: {
     padding: Spacing.three,
+  },
+  habitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
   },
   fab: {
     position: 'absolute',

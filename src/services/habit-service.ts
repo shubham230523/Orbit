@@ -71,5 +71,10 @@ export const habitService = {
       ...row,
       completed: row.completed === 1
     }));
+  },
+
+  async deleteHabit(id: string): Promise<void> {
+    await runExecute('DELETE FROM habit_entries WHERE habitId = ?', [id]);
+    await runExecute('DELETE FROM habits WHERE id = ?', [id]);
   }
 };

@@ -48,6 +48,14 @@ export default function TasksScreen() {
     },
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: taskService.deleteTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+    },
+  });
+
   const handleCreateTask = () => {
     if (!newTaskTitle.trim() || !user) return;
 
@@ -100,6 +108,7 @@ export default function TasksScreen() {
             <TaskCard
               task={enhancedTask as any}
               onToggleComplete={() => toggleTaskMutation.mutate(item)}
+              onDelete={() => deleteTaskMutation.mutate(item.id)}
               style={styles.card}
             />
           );
