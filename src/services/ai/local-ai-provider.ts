@@ -60,7 +60,9 @@ export class LocalAIProvider implements AIProvider {
   }
 
   async generateRoadmap(goalTitle: string, goalDescription?: string): Promise<RoadmapAIResponse> {
-    const rawPrompt = `Create a step-by-step roadmap for: "${goalTitle}". Description: "${goalDescription || ''}". Break it down into 3-7 milestones.`;
+    const rawPrompt = `Create a step-by-step roadmap for: "${goalTitle}". Description: "${goalDescription || ''}".
+    Break it down into 3-7 milestones.
+    IMPORTANT: Every milestone title MUST be unique and descriptive.`;
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.ROADMAP);
     const result = await this.executeInference(prompt);
     return RoadmapSchema.parse(JSON.parse(this.cleanJsonResponse(result.text)));

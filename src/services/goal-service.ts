@@ -145,11 +145,20 @@ export const goalService = {
 
     const milestones: Milestone[] = [];
     console.log('[GoalService] Saving milestones...');
+    const seenTitles = new Set<string>();
+
     for (const m of aiResponse.milestones) {
+      let uniqueTitle = m.title;
+      let counter = 1;
+      while (seenTitles.has(uniqueTitle.toLowerCase())) {
+        uniqueTitle = `${m.title} (${++counter})`;
+      }
+      seenTitles.add(uniqueTitle.toLowerCase());
+
       const milestone: Milestone = {
         id: uuidv4(),
         roadmapId,
-        title: m.title,
+        title: uniqueTitle,
         description: m.description,
         status: 'todo',
         // Assuming AI provides some sort of duration we could map to a date, but for now null
