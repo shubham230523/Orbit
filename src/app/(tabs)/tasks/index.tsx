@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react-native';
 import { taskService } from '@/services/task-service';
+import { scheduleService } from '@/services/schedule-service';
 import { Screen } from '@/components/ui/screen';
 import { ThemedText } from '@/components/themed-text';
 import { TaskCard } from '@/components/ui/task-card';
@@ -27,6 +28,11 @@ export default function TasksScreen() {
   const { data: tasks, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: taskService.getTasks,
+  });
+
+  const { data: schedule } = useQuery({
+    queryKey: ['schedule'],
+    queryFn: scheduleService.getSchedule,
   });
 
   const insets = useSafeAreaInsets();
@@ -70,48 +76,44 @@ export default function TasksScreen() {
     });
   };
 
+  const sortedTasks = React.useMemo(() => {
+    if (!tasks) return [];
+    return [...tasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [tasks]);
+
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState message={error.message} onRetry={refetch} />;
 
   return (
     <Screen scrollable={false}>
       <FlatList
-        data={tasks}
+        data={sortedTasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
-          // Determine if missed: check if there's a schedule block for this task that has already passed its end time
-          const scheduleBlocks = queryClient.getQueryData(['schedule']) as any[];
-          const associatedBlock = scheduleBlocks ? scheduleBlocks.find(b => b.taskId === item.id) : null;
+          // Calculate miss count based on scheduled blocks that have passed
+          const taskBlocks = schedule?.filter(b => b.taskId === item.id) || [];
 
-          let displayStatus = item.status;
-          if (associatedBlock && item.status !== 'completed') {
+          let missCount = 0;
+          if (item.status !== 'completed') {
             const now = new Date();
             const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-            // Reusing logic: Past if current >= end (normal) or special crossover rule
-            const isBlockPast = associatedBlock.startTime < associatedBlock.endTime
-              ? currentHHMM >= associatedBlock.endTime
-              : (currentHHMM >= associatedBlock.endTime && currentHHMM < associatedBlock.startTime && currentHHMM < '05:00');
-
-            if (isBlockPast) {
-              displayStatus = 'blocked'; // Use blocked status or represent visually as missed
-            }
+            taskBlocks.forEach(block => {
+              const isBlockPast = block.startTime < block.endTime
+                ? currentHHMM >= block.endTime
+                : (currentHHMM >= block.endTime && currentHHMM < block.startTime && currentHHMM < '05:00');
+              if (isBlockPast) missCount++;
+            });
           }
 
-          const enhancedTask = {
-            ...item,
-            status: displayStatus === 'blocked' && item.status !== 'completed' ? 'blocked' : item.status,
-            displayTitle: displayStatus === 'blocked' && item.status !== 'completed' ? `${item.title} (Missed)` : item.title
-          };
-
-          if (__DEV__ && tasks.filter(t => t.id === item.id).length > 1) {
-            console.warn(`Duplicate Task ID detected: ${item.id}`);
-          }
+          const displayTitle = missCount > 0
+            ? `${item.title} (Missed ${missCount} time${missCount > 1 ? 's' : ''})`
+            : item.title;
 
           return (
             <TaskCard
-              key={`task-${item.id}-${enhancedTask.status}`}
-              task={{ ...enhancedTask, title: enhancedTask.displayTitle } as any}
+              key={`task-${item.id}-${item.status}-${missCount}`}
+              task={{ ...item, title: displayTitle } as any}
               onToggleComplete={() => toggleTaskMutation.mutate(item)}
               onDelete={() => deleteTaskMutation.mutate(item.id)}
               style={styles.card}
