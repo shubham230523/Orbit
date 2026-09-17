@@ -34,8 +34,6 @@ export default function TasksScreen() {
     queryFn: scheduleService.getSchedule,
   });
 
-
-
   const createTaskMutation = useMutation({
     mutationFn: taskService.createTask,
     onSuccess: () => {

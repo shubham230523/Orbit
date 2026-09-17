@@ -32,7 +32,7 @@ export const Modal = ({ visible, onClose, title, children, style }: ModalProps) 
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable
           style={[styles.content, { backgroundColor: colors.background }, style]}
-          onPress={(e) => e.stopPropagation()}
+          onPress={(e) => e?.stopPropagation?.()}
         >
           <View style={styles.header}>
             {title ? (

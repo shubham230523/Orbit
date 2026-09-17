@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, Pressable } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scheduleService } from '@/services/schedule-service';
 import { Screen } from '@/components/ui/screen';
@@ -16,10 +16,23 @@ import { formatTime12h } from '@/utils/date';
 import { taskService } from '@/services/task-service';
 import { habitService } from '@/services/habit-service';
 import { format } from 'date-fns';
+import { PlannerSelectionModal } from '@/components/planner-selection-modal';
+import { notificationService } from '@/services/notification-service';
+import { Bell, BellOff } from 'lucide-react-native';
 
 export default function TodayScreen() {
   const queryClient = useQueryClient();
   const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const [isSelectionModalVisible, setSelectionModalVisible] = React.useState(false);
+  const [notificationsAvailable, setNotificationsAvailable] = React.useState(false);
+
+  React.useEffect(() => {
+    // Only attempt to check availability after a small delay to ensure native modules are initialized
+    const timer = setTimeout(() => {
+      notificationService.isAvailable().then(setNotificationsAvailable);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const { data: schedule, isLoading: isScheduleLoading, isError: isScheduleError, error: scheduleError, refetch: refetchSchedule } = useQuery({
     queryKey: ['schedule'],
@@ -59,6 +72,23 @@ export default function TodayScreen() {
     },
   });
 
+  const toggleReminderMutation = useMutation({
+    mutationFn: async (block: any) => {
+      if (block.reminderEnabled) {
+        if (block.reminderId) await notificationService.cancelReminder(block.reminderId);
+        return scheduleService.updateReminder(block.id, null, false);
+      } else {
+        const reminderId = await notificationService.scheduleReminder(block);
+        if (reminderId) {
+          return scheduleService.updateReminder(block.id, reminderId, true);
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+    },
+  });
+
   if (isScheduleLoading || isTasksLoading || isHabitsLoading) return <LoadingState />;
   if (isScheduleError) return <ErrorState message={scheduleError.message} onRetry={refetchSchedule} />;
 
@@ -93,10 +123,22 @@ export default function TodayScreen() {
           variant="outline"
           size="small"
           icon={<Sparkles size={16} color="gold" />}
-          onPress={() => generateMutation.mutate()}
+          onPress={() => setSelectionModalVisible(true)}
           loading={generateMutation.isPending}
         />
       </View>
+
+      <PlannerSelectionModal
+        visible={isSelectionModalVisible}
+        onClose={() => setSelectionModalVisible(false)}
+        tasks={tasks?.filter(t => t.status !== 'completed') || []}
+        habits={habits?.filter(h => !h.completed) || []}
+        loading={generateMutation.isPending}
+        onConfirm={(taskIds, habitIds) => {
+          generateMutation.mutate({ taskIds, habitIds });
+          setSelectionModalVisible(false);
+        }}
+      />
 
       <FlatList
         data={schedule}
@@ -135,6 +177,19 @@ export default function TodayScreen() {
                     <ThemedText type="small" style={styles.badgeMissed}>✕ Missed</ThemedText>
                   )}
                 </View>
+
+                {(item.type === 'TASK' || item.type === 'HABIT') && !isCompleted && !isPast && notificationsAvailable && (
+                  <Pressable
+                    onPress={() => toggleReminderMutation.mutate(item)}
+                    style={styles.reminderButton}
+                  >
+                    {item.reminderEnabled ? (
+                      <Bell size={20} color="#208AEF" />
+                    ) : (
+                      <BellOff size={20} color="#ccc" />
+                    )}
+                  </Pressable>
+                )}
               </View>
             </Card>
           );
@@ -188,6 +243,10 @@ const styles = StyleSheet.create({
   },
   titleColumn: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  reminderButton: {
+    padding: Spacing.two,
     justifyContent: 'center',
   },
   completedBlockCard: {

@@ -78,6 +78,8 @@ export const SCHEMA = `
     startTime TEXT NOT NULL,
     endTime TEXT NOT NULL,
     type TEXT DEFAULT 'TASK',
+    reminderId TEXT,
+    reminderEnabled INTEGER DEFAULT 0,
     FOREIGN KEY (userId) REFERENCES users(id),
     FOREIGN KEY (taskId) REFERENCES tasks(id),
     FOREIGN KEY (habitId) REFERENCES habits(id)

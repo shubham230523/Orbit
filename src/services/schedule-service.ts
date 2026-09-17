@@ -18,7 +18,8 @@ export const scheduleService = {
     );
   },
 
-  async generateSchedule(): Promise<ScheduleBlock[]> {
+  async generateSchedule(params?: { taskIds?: string[]; habitIds?: string[] }): Promise<ScheduleBlock[]> {
+    const { taskIds, habitIds } = params || {};
     console.log('[ScheduleService] generateSchedule started');
     const userId = useAuthStore.getState().user?.id;
     if (!userId) throw new Error('Not authenticated');
@@ -26,12 +27,20 @@ export const scheduleService = {
     const provider = AIProviderFactory.getProvider();
     console.log('[ScheduleService] Using AI provider:', provider.getType());
 
-    const tasks = await taskService.getTasks();
+    let tasks = await taskService.getTasks();
+    if (taskIds && taskIds.length > 0) {
+      tasks = tasks.filter(t => taskIds.includes(t.id));
+    }
     console.log('[ScheduleService] Found', tasks.length, 'tasks to schedule');
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const habits = await habitService.getHabitsWithStatus(todayStr);
-    const pendingHabits = habits.filter(h => !h.completed);
+    let habits = await habitService.getHabitsWithStatus(todayStr);
+    let pendingHabits = habits.filter(h => !h.completed);
+
+    if (habitIds && habitIds.length > 0) {
+      pendingHabits = pendingHabits.filter(h => habitIds.includes(h.id));
+    }
+
     console.log('[ScheduleService] Found', pendingHabits.length, 'pending habits to schedule');
 
     // Clear existing schedule for today immediately to ensure a fresh start
@@ -77,5 +86,12 @@ export const scheduleService = {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
     await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
+  },
+
+  async updateReminder(blockId: string, reminderId: string | null, enabled: boolean): Promise<void> {
+    await runExecute(
+      'UPDATE schedule_blocks SET reminderId = ?, reminderEnabled = ? WHERE id = ?',
+      [reminderId, enabled ? 1 : 0, blockId]
+    );
   },
 };
