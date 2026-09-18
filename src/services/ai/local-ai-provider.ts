@@ -14,6 +14,7 @@ import { SYSTEM_RULES } from './system-rules';
 
 export class LocalAIProvider implements AIProvider {
   private status: LocalModelStatus = LocalModelStatus.NOT_INSTALLED;
+  private isCancelled = false;
 
   constructor(
     private adapter: PlatformAIAdapter,
@@ -139,9 +140,12 @@ export class LocalAIProvider implements AIProvider {
     const prompt = wrapInJsonInstruction(rawPrompt, PROMPT_SCHEMAS.SCHEDULER);
     console.log('[LocalAIProvider] Inference prompt sent');
 
+    this.isCancelled = false;
     let parsed: any = null;
     try {
       const result = await this.executeInference(prompt);
+      if (this.isCancelled) throw new Error('Generation cancelled');
+
       const cleaned = this.cleanJsonResponse(result.text);
       let rawJson = JSON.parse(cleaned);
 
@@ -159,7 +163,11 @@ export class LocalAIProvider implements AIProvider {
       }
 
       parsed = SchedulerSchema.parse(rawJson);
-    } catch (e) {
+    } catch (e: any) {
+      if (this.isCancelled || e?.message?.includes('cancel')) {
+        console.log('[LocalAIProvider] Generation cancelled by user');
+        throw new Error('USER_CANCELLED');
+      }
       console.error('[LocalAIProvider] Failed to get or parse AI response, using fallback layout:', e);
     }
 
@@ -330,6 +338,7 @@ export class LocalAIProvider implements AIProvider {
   }
 
   cancel(): void {
+    this.isCancelled = true;
     this.adapter.cancel();
   }
 

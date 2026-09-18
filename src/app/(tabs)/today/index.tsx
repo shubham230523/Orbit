@@ -23,15 +23,8 @@ export default function TodayScreen() {
   const queryClient = useQueryClient();
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const [isSelectionModalVisible, setSelectionModalVisible] = React.useState(false);
+  const [isPlanningModalDismissed, setIsPlanningModalDismissed] = React.useState(false);
   const [notificationsAvailable, setNotificationsAvailable] = React.useState(false);
-
-  React.useEffect(() => {
-    // Only attempt to check availability after a small delay to ensure native modules are initialized
-    const timer = setTimeout(() => {
-      notificationService.isAvailable().then(setNotificationsAvailable);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const { data: schedule, isLoading: isScheduleLoading, isError: isScheduleError, error: scheduleError, refetch: refetchSchedule } = useQuery({
     queryKey: ['schedule'],
@@ -60,9 +53,28 @@ export default function TodayScreen() {
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
     },
     onError: (err) => {
+      if (err.message === 'USER_CANCELLED') {
+        console.log('[TodayScreen] generateSchedule cancelled by user');
+        return;
+      }
       console.error('[TodayScreen] generateSchedule ERROR:', err);
     }
   });
+
+  // Reset planning modal dismissal state when a new generation starts
+  React.useEffect(() => {
+    if (generateMutation.isPending) {
+      setIsPlanningModalDismissed(false);
+    }
+  }, [generateMutation.isPending]);
+
+  React.useEffect(() => {
+    // Only attempt to check availability after a small delay to ensure native modules are initialized
+    const timer = setTimeout(() => {
+      notificationService.isAvailable().then(setNotificationsAvailable);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const clearMutation = useMutation({
     mutationFn: scheduleService.clearSchedule,
@@ -221,8 +233,11 @@ export default function TodayScreen() {
       />
 
       <Modal
-        visible={generateMutation.isPending}
-        onClose={() => {}}
+        visible={generateMutation.isPending && !isPlanningModalDismissed}
+        onClose={() => {
+          setIsPlanningModalDismissed(true);
+          scheduleService.cancelGeneration();
+        }}
         title="Planning Your Day"
       >
         <LoadingState message="Orbit AI is organizing your tasks for maximum productivity..." />

@@ -111,8 +111,10 @@ ${request.prompt}<|im_end|>
   }
 
   async cancel(): Promise<void> {
-    // llama.rn doesn't have a simple global cancel on context yet in this version,
-    // but we can release if needed.
+    if (this.context && typeof this.context.stopCompletion === 'function') {
+      console.log('[AndroidAIAdapter] Stopping completion...');
+      await this.context.stopCompletion();
+    }
   }
 
   async unloadModel(): Promise<void> {

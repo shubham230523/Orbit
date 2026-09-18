@@ -93,6 +93,11 @@ export const scheduleService = {
     await runExecute('DELETE FROM schedule_blocks WHERE userId = ?', [userId]);
   },
 
+  cancelGeneration(): void {
+    const provider = AIProviderFactory.getProvider();
+    provider.cancel();
+  },
+
   async updateReminder(blockId: string, reminderId: string | null, enabled: boolean): Promise<void> {
     await runExecute(
       'UPDATE schedule_blocks SET reminderId = ?, reminderEnabled = ? WHERE id = ?',
