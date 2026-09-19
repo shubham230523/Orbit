@@ -35,6 +35,7 @@ export default function HabitsScreen() {
     mutationFn: habitService.createHabit,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
+      queryClient.invalidateQueries({ queryKey: ['productivity-stats'] });
       setModalVisible(false);
       setNewHabitTitle('');
     },
@@ -45,6 +46,7 @@ export default function HabitsScreen() {
       habitService.logHabit(habitId, today, completed),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
+      queryClient.invalidateQueries({ queryKey: ['productivity-stats'] });
     },
   });
 
@@ -53,6 +55,7 @@ export default function HabitsScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      queryClient.invalidateQueries({ queryKey: ['productivity-stats'] });
     },
   });
 

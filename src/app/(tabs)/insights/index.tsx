@@ -46,10 +46,10 @@ export default function InsightsScreen() {
               <ThemedText type="smallBold" style={styles.statLabel}>Top Streak</ThemedText>
             </View>
             <View style={styles.streakBody}>
-              <ThemedText type="h1" style={styles.streakValue}>
+              <ThemedText type="titleLarge" style={styles.streakValue}>
                 {Math.max(0, ...Object.values(stats?.habitStreaks || {}), 0)}
               </ThemedText>
-              <ThemedText type="small">Days Strong</ThemedText>
+              <ThemedText type="smallBold" style={styles.streakLabel}>Days Strong</ThemedText>
             </View>
           </Card>
         </View>
@@ -127,12 +127,19 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   streakBody: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.two,
+    gap: Spacing.one,
   },
   streakValue: {
     color: '#FF5722',
+    lineHeight: 48,
+  },
+  streakLabel: {
+    opacity: 0.5,
+    textTransform: 'uppercase',
+    fontSize: 10,
   },
   section: {
     gap: Spacing.three,

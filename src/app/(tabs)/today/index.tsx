@@ -15,7 +15,7 @@ import { Calendar, Sparkles, AlarmClock, AlarmClockOff } from 'lucide-react-nati
 import { formatTime12h } from '@/utils/date';
 import { taskService } from '@/services/task-service';
 import { habitService } from '@/services/habit-service';
-import { format } from 'date-fns';
+import { format, addMinutes } from 'date-fns';
 import { PlannerSelectionModal } from '@/components/planner-selection-modal';
 import { notificationService } from '@/services/notification-service';
 
@@ -248,7 +248,7 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.two,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: Spacing.two,

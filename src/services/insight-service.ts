@@ -56,15 +56,27 @@ export const insightService = {
       const today = startOfDay(new Date());
 
       for (let i = 0; i < entries.length; i++) {
+        if (entries[i].completed !== 1) break;
+
         const entryDate = startOfDay(parseISO(entries[i].date));
         const diff = differenceInDays(today, entryDate);
 
-        // If missed a day (diff > i), streak is broken.
-        // We allow 0 (today) or 1 (yesterday) for the first entry.
-        if (entries[i].completed === 1 && diff <= i) {
-          streak++;
-        } else if (diff > i) {
-          break;
+        // If it's the first entry and it's from today or yesterday, it's valid.
+        // Subsequent entries must be exactly 1 day apart.
+        if (i === 0) {
+          if (diff <= 1) {
+            streak++;
+          } else {
+            break;
+          }
+        } else {
+          const prevEntryDate = startOfDay(parseISO(entries[i - 1].date));
+          const dayDiff = differenceInDays(prevEntryDate, entryDate);
+          if (dayDiff === 1) {
+            streak++;
+          } else {
+            break;
+          }
         }
       }
       habitStreaks[habit.title] = streak;

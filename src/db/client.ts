@@ -16,6 +16,18 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
       // Execute schema
       await database.execAsync(SCHEMA);
 
+      // Migrations: Add reminder columns if they don't exist
+      try {
+        await database.execAsync('ALTER TABLE schedule_blocks ADD COLUMN reminderId TEXT;');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await database.execAsync('ALTER TABLE schedule_blocks ADD COLUMN reminderEnabled INTEGER DEFAULT 0;');
+      } catch (e) {
+        // Column might already exist
+      }
+
       // Ensure test user exists for auth bypass
       await database.runAsync(
         'INSERT OR IGNORE INTO users (id, email, name) VALUES (?, ?, ?)',

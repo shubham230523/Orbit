@@ -48,6 +48,7 @@ export default function TasksScreen() {
       taskService.updateTask({ ...task, status: task.status === 'completed' ? 'todo' : 'completed' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['productivity-stats'] });
     },
   });
 

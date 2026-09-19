@@ -82,7 +82,11 @@ export const notificationService = {
           body: `Starting in 5 minutes at ${block.startTime}`,
           data: { blockId: block.id },
         },
-        trigger: triggerDate,
+        trigger: {
+          type: 'date',
+          date: triggerDate,
+          channelId: Platform.OS === 'android' ? 'default' : undefined,
+        } as any,
       });
 
       console.log(`[NotificationService] Scheduled notification ${id} for ${block.title} at ${format(triggerDate, 'HH:mm')}`);

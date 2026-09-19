@@ -41,6 +41,8 @@ export interface ScheduleBlock {
   startTime: string;
   endTime: string;
   type: 'TASK' | 'EVENT' | 'FOCUS' | 'BREAK' | 'HABIT';
+  reminderId?: string;
+  reminderEnabled?: boolean;
 }
 
 export interface Habit {
